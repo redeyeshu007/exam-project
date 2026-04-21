@@ -1,0 +1,979 @@
+/* ============================================
+   IMPORTS
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ============================================
+   1. CSS VARIABLES
+   ============================================ */
+:root {
+  --primary:        #B42B6A;
+  --primary-hover:  #9A2259;
+  --primary-deep:   #7D1B47;
+  --primary-light:  #FDF2F7;
+  --primary-light2: #FCE8F3;
+  --success:        #16A34A;
+  --danger:         #DC2626;
+  --warning:        #F59E0B;
+  --text-dark:      #1B0A12;
+  --text-heading:   #2D1F26;
+  --text-body:      #6B5E63;
+  --text-muted:     #9B8F94;
+  --bg-off:         #FAF7F9;
+  --bg-card:        #FBF9FA;
+  --border:         #E8E2E5;
+  --border-strong:  #D4CDD0;
+  --radius:         14px;
+  --radius-sm:      8px;
+  --radius-pill:    50px;
+  --shadow-sm:      0 1px 4px rgba(27,10,18,0.07);
+  --shadow-md:      0 4px 20px rgba(27,10,18,0.09);
+  --shadow-lg:      0 8px 40px rgba(27,10,18,0.12);
+  --shadow-primary: 0 4px 18px rgba(180,43,106,0.28);
+  --transition:     all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ============================================
+   2. RESET & BASE
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: linear-gradient(160deg, #FAF5F8 0%, #FBF9FA 60%, #F9F5F7 100%);
+  background-attachment: fixed;
+  color: var(--text-body);
+  margin: 0; padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--text-heading);
+}
+
+.mono { font-family: 'JetBrains Mono', Consolas, monospace; }
+
+/* ============================================
+   3. LAYOUT
+   ============================================ */
+.app-layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+.main-content {
+  flex: 1;
+  padding: 0 16px 3rem;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================================
+   4. FLOATING PILL NAVBAR
+   ============================================ */
+
+/* Shimmer on the nav CTA button */
+.nav-cta-btn { position: relative; overflow: hidden; }
+.nav-cta-btn::after {
+  content: '';
+  position: absolute; top: -50%; left: -80%;
+  width: 50%; height: 200%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+  transform: skewX(-20deg);
+  animation: btnShimmer 2.8s ease-in-out infinite;
+}
+.nav-cta-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 22px rgba(180,43,106,0.45) !important;
+}
+
+@keyframes navShimmer {
+  0%   { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   5. SHINY BUTTONS
+   ============================================ */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 7px;
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg,#B42B6A 0%,#9A2259 60%,#B42B6A 100%) !important;
+  background-size: 200% 100% !important;
+  border: none !important; color: white !important;
+  padding: 10px 26px; border-radius: var(--radius-pill);
+  font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 4px 15px rgba(180,43,106,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+  letter-spacing: 0.2px;
+}
+.btn-primary::after {
+  content: ''; position: absolute; top: -50%; left: -75%;
+  width: 50%; height: 200%;
+  background: linear-gradient(to right,transparent,rgba(255,255,255,0.28),transparent);
+  transform: skewX(-20deg);
+  animation: btnShimmer 2.5s ease-in-out infinite;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(180,43,106,0.42), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 8px rgba(180,43,106,0.25); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: white !important; color: var(--text-heading) !important;
+  border: 1.5px solid var(--border-strong) !important;
+  padding: 10px 26px; border-radius: var(--radius-pill);
+  font-weight: 600; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 1px 4px rgba(27,10,18,0.06);
+}
+.btn-secondary:hover {
+  background: var(--primary-light) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(180,43,106,0.12);
+}
+.btn-secondary:active { transform: translateY(0); }
+
+/* Bootstrap btn-primary override */
+.btn.btn-primary, a.btn.btn-primary {
+  background: linear-gradient(135deg,#B42B6A 0%,#9A2259 60%,#B42B6A 100%) !important;
+  background-size: 200% 100% !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 15px rgba(180,43,106,0.28) !important;
+  border-radius: var(--radius-pill) !important;
+  font-weight: 700 !important; transition: all 0.25s !important;
+  position: relative; overflow: hidden;
+}
+.btn.btn-primary:hover, a.btn.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(180,43,106,0.4) !important;
+}
+.btn.btn-outline-secondary:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+
+@keyframes btnShimmer {
+  0%   { left: -75%; }
+  60%  { left: 125%; }
+  100% { left: 125%; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-spinner {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.35); border-top-color: white;
+  border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+
+/* ============================================
+   6. FORM ACTIONS
+   ============================================ */
+.form-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 2rem; padding: 1rem 0.5rem 0; border-top: 1px solid var(--border);
+}
+
+/* ============================================
+   7. INPUTS, SELECTS, DROPDOWNS — pink-accented
+   ============================================ */
+.form-control, .form-select {
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  background-color: #FAFAFA !important;
+  color: var(--text-heading) !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  font-size: 0.95rem !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease !important;
+}
+.form-control:focus, .form-select:focus,
+.wizard-input:focus, .form-input-focus:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(180,43,106,0.11) !important;
+  background-color: white !important;
+  outline: none !important;
+}
+
+/* Custom pink select arrow */
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23B42B6A' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 14px !important;
+}
+
+/* bg-light inputs keep pink border on focus */
+.form-control.bg-light, .form-select.bg-light {
+  background-color: #F7F5F6 !important;
+}
+.form-control.bg-light:focus, .form-select.bg-light:focus {
+  background-color: white !important;
+}
+
+/* Placeholder color */
+.form-control::placeholder { color: #C0B5BA !important; }
+
+/* Step field label */
+.step-field-label, .form-label-small {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.7px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+
+/* ============================================
+   8. WIZARD STEP PROGRESS BAR — screenshot exact
+      [✓]────[2]────[○]   style
+   ============================================ */
+
+/* ── Wizard Step Progress Bar ──
+   Layout:  [ring-wrap + label] ── line ── [ring-wrap + label] ── ...
+   ring-wrap = 52×52 container; inner circle = 40×40; outer ring = 52×52 abs
+   Line margin-top = 25px  (= 26px ring-wrap centre − 1px half of 2px line)
+   ─────────────────────────────────────────────────────────────────────── */
+
+.wizard-steps-bar {
+  display: flex;
+  align-items: flex-start;   /* keep top-aligned so margin-top on line is predictable */
+  padding: 20px 12px 4px;
+}
+
+/* unit = [node] + optional [line]; flex:1 stretches line, last unit has no line so flex:0 */
+.wizard-step-unit {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* node = [ring-wrap] stacked above [label] */
+.wizard-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ring-wrap: fixed 52×52 box that holds the absolute outer ring + the inner circle */
+.step-ring-wrap {
+  width: 52px; height: 52px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Outer pale ring — absolutely fills the ring-wrap */
+.step-outer-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(180,43,106,0.13);
+  pointer-events: none;
+}
+.step-outer-ring--active {
+  animation: outerRingPulse 2s ease-in-out infinite;
+}
+@keyframes outerRingPulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.5; transform: scale(1.14); }
+}
+
+/* Inner circle — three states, z-index above the ring */
+.step-inner-circle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 700; font-size: 15px;
+  position: relative; z-index: 1;
+  flex-shrink: 0;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.step-inner-circle--done {
+  background: linear-gradient(135deg, #B42B6A 0%, #9A2259 100%);
+  color: white;
+  box-shadow: 0 3px 12px rgba(180,43,106,0.38);
+  animation: circleBounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.step-inner-circle--active {
+  background: linear-gradient(135deg, #B42B6A 0%, #9A2259 100%);
+  color: white;
+  box-shadow: 0 3px 16px rgba(180,43,106,0.45);
+}
+.step-inner-circle--pending {
+  background: white;
+  color: #C0B5BA;
+  border: 2px solid #DDD5D9;
+  box-shadow: 0 1px 4px rgba(27,10,18,0.06);
+}
+
+@keyframes circleBounceIn {
+  0%   { transform: scale(0.5); opacity: 0; }
+  65%  { transform: scale(1.18); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Step label (sits below the ring-wrap) */
+.wizard-step-label {
+  font-size: 11px; font-weight: 500;
+  color: var(--text-muted); letter-spacing: 0.2px;
+  white-space: nowrap; transition: color 0.3s ease;
+  text-align: center; line-height: 1.3;
+}
+.wizard-step-label--active { color: var(--primary); font-weight: 700; }
+.wizard-step-label--done   { color: var(--primary); font-weight: 600; }
+
+/* Connector line — margin-top = 26px (ring-wrap centre) − 1px = 25px */
+.wizard-step-line {
+  flex: 1;
+  height: 2px;
+  background: #E8DFE4;
+  border-radius: 2px;
+  position: relative;
+  margin: 25px 6px 0;   /* top=25 aligns with 40px circle centre inside 52px ring-wrap */
+  overflow: hidden;
+}
+.wizard-step-line-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: linear-gradient(90deg, #B42B6A 0%, #E05C96 100%);
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 0 6px rgba(180,43,106,0.35);
+}
+
+/* ============================================
+   9. LOGIN
+   ============================================ */
+.login-wrapper {
+  background: linear-gradient(145deg, #FDF2F7 0%, #FFFFFF 50%, #F5F0FF 100%);
+  background-attachment: fixed;
+}
+.login-card {
+  box-shadow: 0 24px 60px rgba(180,43,106,0.1), 0 4px 16px rgba(27,10,18,0.06) !important;
+  border: 1px solid rgba(232,226,229,0.6) !important;
+}
+
+/* ============================================
+   10. CARDS & SURFACES
+   ============================================ */
+.step-content {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  background: white !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.card-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.card-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-md) !important; }
+
+/* ============================================
+   11. UTILITY
+   ============================================ */
+.cursor-pointer  { cursor: pointer; }
+.hover-shadow-sm:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.hover-primary:hover   { background-color: var(--primary-light) !important; color: var(--primary) !important; }
+.hover-scale           { transition: transform 0.2s ease; }
+.hover-scale:hover     { transform: scale(1.05); }
+
+/* ============================================
+   12. FILE UPLOAD ZONE
+   ============================================ */
+.file-upload-zone {
+  border: 2px dashed var(--border-strong); border-radius: var(--radius);
+  padding: 3rem 2rem; text-align: center; cursor: pointer;
+  transition: var(--transition); background: var(--bg-card); position: relative;
+}
+.file-upload-zone:hover, .file-upload-zone.drag-over {
+  border-color: var(--primary); background: var(--primary-light);
+  transform: translateY(-2px); box-shadow: var(--shadow-md);
+}
+.file-upload-zone .upload-icon { font-size: 3rem; color: var(--primary); margin-bottom: 1rem; transition: var(--transition); }
+.file-upload-zone:hover .upload-icon { transform: scale(1.1) translateY(-4px); }
+.file-upload-zone .upload-text  { font-size: 1rem; color: var(--text-body); font-weight: 500; }
+.file-upload-zone .upload-hint  { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+.file-upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.file-preview-card {
+  background: white; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+  margin-top: 1rem; animation: popIn 0.25s ease-out forwards;
+}
+.file-preview-card .file-icon {
+  width: 48px; height: 48px; border-radius: var(--radius-sm);
+  background: var(--primary-light); display: flex; align-items: center;
+  justify-content: center; color: var(--primary); font-size: 1.5rem; flex-shrink: 0;
+}
+.file-preview-card .file-info  { flex: 1; min-width: 0; }
+.file-preview-card .file-name  { font-weight: 600; color: var(--text-heading); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-preview-card .file-size  { font-size: 0.75rem; color: var(--text-muted); }
+
+.upload-summary {
+  background: linear-gradient(135deg,#F0FFF4 0%,#FFFFFF 100%);
+  border: 1px solid #BBF7D0; border-radius: var(--radius);
+  padding: 1.5rem; animation: slideUp 0.3s ease-out forwards;
+}
+.upload-summary .summary-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700; color: var(--success); }
+.upload-summary .stat-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; font-size: 0.95rem; }
+.upload-summary .stat-value { font-weight: 700; color: var(--text-heading); }
+
+.elective-chip {
+  display: inline-flex; align-items: center; padding: 0.2rem 0.6rem;
+  border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+  background: var(--primary-light); color: var(--primary);
+  border: 1px solid rgba(180,43,106,0.15); margin: 0.15rem;
+}
+
+/* ============================================
+   13. ELECTIVE TABLES
+   ============================================ */
+.elective-table-wrapper {
+  overflow-x: auto; margin-bottom: 2rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: white;
+}
+.elective-table-wrapper .table-title {
+  padding: 1rem 1.25rem; font-size: 0.95rem; font-weight: 700; color: var(--text-heading);
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.elective-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.elective-table th {
+  background: var(--primary-light); color: var(--primary); font-weight: 700;
+  padding: 0.75rem 1rem; text-align: center; border: 1px solid var(--border);
+  white-space: nowrap; font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.8rem; letter-spacing: 0.3px;
+}
+.elective-table td { padding: 0.6rem 1rem; text-align: center; border: 1px solid var(--border); font-weight: 500; }
+.elective-table tbody tr:hover { background: var(--bg-card); }
+.elective-table .total-row { background: var(--primary-light); font-weight: 700; }
+.elective-table .total-row td { color: var(--primary); font-weight: 700; border-top: 2px solid var(--primary); }
+.elective-table .section-cell { font-weight: 700; color: var(--text-heading); text-align: left; font-family: 'JetBrains Mono', Consolas, monospace; }
+
+/* ============================================
+   14. SEATING CHART
+   ============================================ */
+.seating-chart-wrapper { margin-bottom: 2rem; }
+.seating-hall-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+.seating-hall-header {
+  background: linear-gradient(135deg,var(--primary) 0%,var(--primary-hover) 100%);
+  color: white; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;
+}
+.seating-hall-header h4 { margin: 0; font-size: 1rem; font-weight: 700; color: white; }
+.seating-hall-header .hall-stats { font-size: 0.8rem; opacity: 0.9; }
+.seating-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 0.5rem; padding: 1.25rem; }
+.seat-cell {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0.5rem; text-align: center; transition: var(--transition);
+  min-height: 60px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.25rem;
+}
+.seat-cell:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.seat-cell .roll-no { font-size: 0.78rem; font-weight: 700; color: var(--text-heading); font-family: 'JetBrains Mono', Consolas, monospace; }
+.seat-cell .elective-code { font-size: 0.65rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 0.1rem 0.4rem; border-radius: 10px; }
+.seat-cell .seat-number { font-size: 0.6rem; color: var(--text-muted); }
+.seating-row-label { grid-column: 1/-1; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); padding: 0.25rem 0; letter-spacing: 0.5px; }
+
+/* ============================================
+   15. MODALS & DATE PICKER
+   ============================================ */
+.modal-overlay { backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-in-out; }
+.date-cell-hover:hover { background-color: var(--primary-light); color: var(--primary) !important; font-weight: bold; }
+
+/* ============================================
+   16. HISTORY
+   ============================================ */
+.history-row-hover:hover { background-color: var(--bg-card); }
+
+/* ============================================
+   17. PROFESSIONAL FOOTER
+   ============================================ */
+.app-footer {
+  background: linear-gradient(135deg, #FDFBFC 0%, #FFF9FB 100%);
+  border-top: 1px solid var(--border);
+  padding: 0;
+  animation: fadeIn 0.5s ease;
+}
+
+.footer-accent-line {
+  height: 3px;
+  background: linear-gradient(90deg, #9A2259 0%, #B42B6A 30%, #E05C96 60%, #B42B6A 80%, #9A2259 100%);
+  background-size: 200% 100%;
+  animation: navShimmer 4s linear infinite;
+}
+
+.footer-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.footer-brand-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 13px; font-weight: 700; color: var(--text-heading); line-height: 1.2;
+}
+.footer-brand-sub {
+  font-size: 10.5px; color: var(--text-muted); margin-top: 1px;
+}
+
+.footer-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+.footer-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  color: var(--text-muted); background: white;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+.footer-pill:hover {
+  color: var(--primary); border-color: rgba(180,43,106,0.25);
+  background: var(--primary-light); transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(180,43,106,0.1);
+}
+
+.footer-copy {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  font-size: 11.5px; color: var(--text-muted);
+}
+.footer-version {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 600;
+  background: var(--primary-light); color: var(--primary);
+  padding: 2px 8px; border-radius: 10px;
+  border: 1px solid rgba(180,43,106,0.15);
+}
+
+/* ============================================
+   18. ANIMATIONS
+   ============================================ */
+@keyframes fadeIn      { from{opacity:0}      to{opacity:1} }
+@keyframes slideUp     { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideInRight{ from{opacity:0;transform:translateX(32px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideInLeft { from{opacity:0;transform:translateX(-32px)} to{opacity:1;transform:translateX(0)} }
+@keyframes popIn {
+  0%   { transform: scale(0.92); opacity: 0; }
+  70%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+.page-enter    { animation: slideUp      0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+.step-forward  { animation: slideInRight 0.32s cubic-bezier(0.16,1,0.3,1) forwards; }
+.step-backward { animation: slideInLeft  0.32s cubic-bezier(0.16,1,0.3,1) forwards; }
+.popup-anim    { animation: popIn        0.3s  cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+.float-anim    { animation: floatUp      3s    ease-in-out infinite; }
+
+.processing-shimmer {
+  background: linear-gradient(90deg,var(--bg-card) 25%,var(--primary-light) 50%,var(--bg-card) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  border-radius: var(--radius); height: 120px;
+}
+
+/* ============================================
+   19. RESPONSIVE — Mobile First
+   ============================================ */
+
+/* ── Viewport wrapper (AllocationWizard outer container) ── */
+.viewport-wrapper { padding: 0 8px; }
+.compact-view { max-width: 860px; margin: 0 auto; }
+.wizard-container { padding: 8px 0 24px; }
+
+/* ── Step content area ── */
+.step-content-area { width: 100%; }
+
+/* Tablet ≤ 992px */
+@media (max-width: 992px) {
+  .main-content { padding: 0 12px 2rem; }
+  .compact-view { max-width: 100%; }
+}
+
+/* Mobile ≤ 768px */
+@media (max-width: 768px) {
+  /* Layout */
+  .main-content { padding: 0 8px 2rem; }
+  .viewport-wrapper { padding: 0 4px; }
+
+  /* Wizard progress bar — shrink circles */
+  .wizard-steps-bar  { padding: 12px 2px 4px; gap: 0; }
+  .step-ring-wrap    { width: 38px; height: 38px; }
+  .step-inner-circle { width: 30px; height: 30px; font-size: 12px; }
+  .step-inner-circle svg { width: 12px; height: 12px; }
+  .wizard-step-line  { margin-top: 18px; }
+  .wizard-step-label { font-size: 9px; }
+
+  /* Step content card padding */
+  .step-content { padding: 14px !important; }
+
+  /* Form actions */
+  .form-actions { padding: 0.75rem 0 0; margin-top: 1.25rem; }
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary { padding: 9px 18px; font-size: 0.85rem; }
+
+  /* File upload */
+  .file-upload-zone { padding: 1.5rem 1rem; }
+
+  /* Seating grid */
+  .seating-grid { grid-template-columns: repeat(3,1fr); gap: 0.3rem; padding: 0.6rem; }
+  .seat-cell    { padding: 0.3rem; min-height: 46px; }
+  .seat-cell .roll-no { font-size: 0.65rem; }
+
+  /* Footer */
+  .footer-body {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .footer-meta { justify-content: flex-start; }
+  .footer-copy { width: 100%; justify-content: space-between; }
+
+  /* History table hidden on mobile — cards take over */
+  .history-desktop { display: none !important; }
+}
+
+/* Small mobile ≤ 480px */
+@media (max-width: 480px) {
+  /* Wizard progress — even smaller */
+  .step-ring-wrap    { width: 32px; height: 32px; }
+  .step-inner-circle { width: 26px; height: 26px; font-size: 11px; }
+  .wizard-step-line  { margin-top: 15px; height: 1.5px; }
+  .wizard-step-label { display: none !important; }
+
+  /* Exam name pill buttons full width */
+  .exam-pill-wrap { flex-direction: column !important; }
+  .exam-pill-wrap button { width: 100%; }
+
+  /* Clock time picker — stack vertically on tiny screens */
+  .clock-pickers-row { flex-direction: column !important; gap: 12px !important; }
+  .clock-arrow-divider { display: none !important; }
+
+  /* Section row */
+  .section-row { flex-wrap: wrap; gap: 8px !important; }
+
+  /* Seating */
+  .seating-grid { grid-template-columns: repeat(2,1fr); }
+
+  /* Step content */
+  .step-content { padding: 10px !important; }
+  .step-content .row { --bs-gutter-x: 0.75rem; --bs-gutter-y: 0.75rem; }
+}
+
+/* ── Navbar pill: no overflow on small screens ── */
+@media (max-width: 400px) {
+  .navbar-logo-text { display: none !important; }
+}
+
+/* ── Print preview pages: horizontally scrollable on small screens ── */
+.print-page-outer {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+/* ── Print toolbar inner container ── */
+@media (max-width: 860px) {
+  .print-toolbar-inner {
+    max-width: 100% !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .print-editor-toolbar {
+    max-width: 100% !important;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Print toolbar outer padding */
+  .print-toolbar-outer { padding: 8px 12px !important; }
+
+  /* Center exam info: move below left/right buttons */
+  .print-toolbar-center {
+    order: 3;
+    flex: 0 0 100%;
+    text-align: left !important;
+    border-top: 1px solid #E8E2E5;
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+  .print-toolbar-center-sub { display: none; }
+
+  /* Right button group: allow wrapping */
+  .print-toolbar-right { flex-wrap: wrap; gap: 6px !important; }
+
+  /* Page headers (Attendance, History) */
+  .page-header-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* Login card */
+  .login-card-inner { padding: 24px 18px !important; }
+
+  /* OTP input boxes */
+  .otp-row { gap: 7px !important; }
+  .otp-box {
+    width: 38px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Scrollable edit modal on small phones */
+  .modal-card-scrollable {
+    max-height: 92vh;
+    overflow-y: auto !important;
+  }
+
+  /* Home cards: stack on phones */
+  .home-feature-cards { flex-direction: column; gap: 16px !important; }
+  .home-feature-cards > div { max-width: 100% !important; }
+}
+
+@media (max-width: 380px) {
+  .otp-box {
+    width: 33px !important;
+    height: 42px !important;
+    font-size: 17px !important;
+  }
+  .otp-row { gap: 5px !important; }
+  .login-card-inner { padding: 20px 14px !important; }
+  .print-toolbar-outer { padding: 6px 8px !important; }
+}
+
+/* ============================================
+   20. HISTORY TABS
+   ============================================ */
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  background: #F5F0F3;
+  border-radius: 50px;
+  padding: 5px;
+  width: fit-content;
+}
+
+.history-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9B8F94;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+  white-space: nowrap;
+}
+
+.history-tab-btn.active {
+  background: linear-gradient(135deg, #B42B6A 0%, #9A2259 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(180, 43, 106, 0.32);
+}
+
+.history-tab-btn:hover:not(.active) {
+  background: rgba(180, 43, 106, 0.08);
+  color: #B42B6A;
+}
+
+/* ============================================
+   21. ACTION ICON BUTTONS
+   ============================================ */
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+  text-decoration: none;
+  font-size: 0;
+}
+
+.action-icon-btn.aib-edit {
+  background: #FDF2F7;
+  border-color: rgba(180, 43, 106, 0.2);
+  color: #B42B6A;
+}
+.action-icon-btn.aib-edit:hover {
+  background: #B42B6A;
+  border-color: #B42B6A;
+  color: white;
+  box-shadow: 0 4px 12px rgba(180, 43, 106, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-view {
+  background: #EFF6FF;
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #3B82F6;
+}
+.action-icon-btn.aib-view:hover {
+  background: #3B82F6;
+  border-color: #3B82F6;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-print {
+  background: #F0FDF4;
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #22C55E;
+}
+.action-icon-btn.aib-print:hover {
+  background: #22C55E;
+  border-color: #22C55E;
+  color: white;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-attend {
+  background: #FFF7ED;
+  border-color: rgba(249, 115, 22, 0.2);
+  color: #F97316;
+}
+.action-icon-btn.aib-attend:hover {
+  background: #F97316;
+  border-color: #F97316;
+  color: white;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-delete {
+  background: #FEF2F2;
+  border-color: rgba(220, 38, 38, 0.2);
+  color: #DC2626;
+}
+.action-icon-btn.aib-delete:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Mobile action buttons */
+.action-mobile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 50px;
+  border: 1.5px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.action-mobile-btn.aib-edit { background: #FDF2F7; border-color: rgba(180,43,106,0.2); color: #B42B6A; }
+.action-mobile-btn.aib-view { background: #EFF6FF; border-color: rgba(59,130,246,0.2); color: #3B82F6; }
+.action-mobile-btn.aib-print { background: #F0FDF4; border-color: rgba(34,197,94,0.2); color: #22C55E; }
+.action-mobile-btn.aib-attend { background: #FFF7ED; border-color: rgba(249,115,22,0.2); color: #F97316; }
+.action-mobile-btn.aib-delete { background: #FEF2F2; border-color: rgba(220,38,38,0.2); color: #DC2626; padding: 7px 12px; }
+
+/* ============================================
+   22. ANIMATIONS
+   ============================================ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tabSlideIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes staggerFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tab-content-enter {
+  animation: tabSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: staggerFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.stagger-item:nth-child(1)  { animation-delay: 30ms; }
+.stagger-item:nth-child(2)  { animation-delay: 80ms; }
+.stagger-item:nth-child(3)  { animation-delay: 130ms; }
+.stagger-item:nth-child(4)  { animation-delay: 180ms; }
+.stagger-item:nth-child(5)  { animation-delay: 230ms; }
+.stagger-item:nth-child(6)  { animation-delay: 280ms; }
+.stagger-item:nth-child(7)  { animation-delay: 330ms; }
+.stagger-item:nth-child(8)  { animation-delay: 380ms; }
+.stagger-item:nth-child(9)  { animation-delay: 430ms; }
+.stagger-item:nth-child(10) { animation-delay: 480ms; }
+
+/* Smooth hover lift for cards */
+.bg-white.rounded-4 {
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
+}
+.bg-white.rounded-4:hover {
+  box-shadow: 0 8px 32px rgba(27, 10, 18, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+/* Shimmer pulse on primary buttons */
+@keyframes btnShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-primary {
+  background-size: 200% auto;
+  transition: background-position 0.5s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(180, 43, 106, 0.35) !important;
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .elective-table-wrapper { border: 1px solid #000; break-inside: avoid; }
+  .elective-table th { background: #f5f5f5 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .elective-table .total-row { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .elective-table .total-row td { color: #000 !important; border-top: 2px solid #000; }
+  .seating-hall-header { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .seat-cell .elective-code { background: #eee !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .seating-hall-card { break-inside: avoid; }
+}
