@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import { FiArrowLeft, FiPrinter, FiUploadCloud, FiX, FiCheckCircle, FiFile, FiEdit2, FiSave, FiXCircle, FiAlignLeft, FiAlignCenter, FiAlignRight, FiType, FiMove, FiGrid, FiAlertTriangle, FiChevronLeft, FiChevronRight, FiCalendar, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiPrinter, FiUploadCloud, FiX, FiCheckCircle, FiFile, FiEdit2, FiSave, FiXCircle, FiAlignLeft, FiAlignCenter, FiAlignRight, FiType, FiMove, FiGrid, FiAlertTriangle, FiChevronLeft, FiChevronRight, FiCalendar, FiClock, FiRotateCcw, FiRotateCw } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -136,10 +136,10 @@ const buildHallStudentsElective = (allocation) => {
 };
 
 /* ─── Compute max date columns that fit one A4 page (182mm usable) ──── */
+/* Cap at 8: any 9th date onward overflows to a new page automatically.   */
 const getMaxDateCols = (n) => {
   if (n <= 5)  return 5;
-  if (n <= 8)  return 8;
-  return 10;
+  return 8;   // hard cap — 9th date and beyond go to the next page
 };
 
 /* ─── Per-page column widths (all in px, tableLayout: fixed) ─────── */
@@ -165,7 +165,7 @@ const SheetHeader = ({ allocation, hallName, yearLabel, examTitle }) => {
   const toDate   = parseDate(allocation.toDate) || fromDate;
   const INFO = {
     fontFamily: PRINT_FONT, fontSize: '10.5pt', fontWeight: 'bold',
-    padding: '2px 0', lineHeight: '1.35',
+    padding: '2px 0', lineHeight: '1.35', color: '#000',
   };
   return (
     <>
@@ -179,16 +179,16 @@ const SheetHeader = ({ allocation, hallName, yearLabel, examTitle }) => {
             width: '48px', height: '48px', objectFit: 'contain',
           }}
         />
-        <div style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '13pt' }}>
+        <div style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '13pt', color: '#000', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
           PSNA COLLEGE OF ENGINEERING AND TECHNOLOGY, DINDIGUL
         </div>
-        <div style={{ fontFamily: PRINT_FONT, fontSize: '10pt', fontStyle: 'italic' }}>
+        <div style={{ fontFamily: PRINT_FONT, fontSize: '10pt', fontStyle: 'italic', fontWeight: 'bold', color: '#000', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
           (An Autonomous Institution Affiliated to Anna University, Chennai)
         </div>
-        <div style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '11pt', textDecoration: 'underline', marginTop: '2px' }}>
+        <div style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '11pt', textDecoration: 'underline', marginTop: '2px', color: '#000', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
           ATTENDANCE SHEET
         </div>
-        <div style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '10.5pt', textDecoration: 'underline' }}>
+        <div style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '10.5pt', textDecoration: 'underline', color: '#000', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
           {examTitle}
         </div>
       </div>
@@ -227,22 +227,22 @@ const AttendanceSheetPage = ({
   const examTitle = `${allocation.examName || ''} (${allocation.academicYear || ''} ${allocation.semesterType || ''})`;
 
   const n    = dateCols.length;
-  // Use the max potential width for this hall to keep column alignment across pages
-  const cw   = colWidths(Math.min(10, totalDateCols));
+  // Use the max potential width for this hall to keep column alignment across pages (cap 8)
+  const cw   = colWidths(Math.min(8, totalDateCols));
   const dfs  = dateFontSize(n);
 
   /* ── Shared cell styles — matching HallPlanPrint exactly ── */
   const TH = {
     fontFamily: PRINT_FONT, fontSize: '10.5pt', fontWeight: 'bold',
     padding: '5px 4px', textAlign: 'center', verticalAlign: 'middle',
-    border: '1.5px solid #000',
+    border: '1.5px solid #000', color: '#000',
     backgroundColor: '#f0f0f0',
     WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
     lineHeight: '1.3',
   };
   const TD = {
     fontFamily: PRINT_FONT, fontSize: '10.5pt', fontWeight: 'bold',
-    padding: '5px 4px', border: '1px solid #000',
+    padding: '5px 4px', border: '1px solid #000', color: '#000',
     lineHeight: '1.35', height: '24px',
     wordBreak: 'break-word', whiteSpace: 'normal',
     verticalAlign: 'middle',
@@ -337,8 +337,8 @@ const AttendanceSheetPage = ({
             const footerRows = [
               { label: 'Number of Students Present :', bold: true,  height: '26px' },
               { label: 'Number of Students Absent :',  bold: true,  height: '26px' },
-              { label: 'Invigilator Signature',        bold: false, height: '36px' },
-              { label: 'Designation & Department',     bold: false, height: '30px' },
+              { label: 'Invigilator Signature',        bold: true,  height: '36px' },
+              { label: 'Designation & Department',     bold: true,  height: '30px' },
             ];
             return footerRows.map(({ label, bold, height }) => (
               <tr key={label} style={{ pageBreakInside: 'avoid' }}>
@@ -362,7 +362,7 @@ const AttendanceSheetPage = ({
 
       {/* Note — only on final page */}
       {isLastPage && (
-        <div style={{ fontFamily: PRINT_FONT, fontSize: '10pt', marginTop: '5px', fontWeight: 'bold' }}>
+        <div style={{ fontFamily: PRINT_FONT, fontSize: '10pt', marginTop: '5px', fontWeight: 'bold', color: '#000', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}>
           Note: Mark &ldquo;AB&rdquo; for Absent
         </div>
       )}
@@ -375,6 +375,7 @@ const AttendanceSheetPage = ({
           textAlign: 'center',
           fontFamily: PRINT_FONT,
           fontSize: '9pt',
+          fontWeight: 'bold',
           verticalAlign: 'middle',
         };
         const ttLabel = {
@@ -826,8 +827,11 @@ const AttendancePrint = () => {
   const printRef     = useRef();
   const dragRef      = useRef(null);
   const containerRef  = useRef();
-  const userZoomedRef = useRef(false);
+  const userZoomedRef     = useRef(false);
   const [pageScale,   setPageScale]  = useState(1);
+  const pageScaleRef      = useRef(1);
+  const tbsRef            = useRef([]);
+  const editableShtsRef   = useRef(null);
 
   const ttFileRef = useRef();
 
@@ -870,16 +874,63 @@ const AttendancePrint = () => {
     document.execCommand(cmd, false, val ?? null);
   }, []);
 
+  /* ── Undo / Redo ── */
+  const undoStack = useRef([]);
+  const redoStack = useRef([]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.current.length > 0) {
+      const prev = undoStack.current.pop();
+      setTextBoxes(cur => { redoStack.current.push({ textBoxes: cur, editableShts: editableShts }); return prev.textBoxes; });
+      if (prev.editableShts !== undefined) setEditableShts(prev.editableShts);
+    } else {
+      document.execCommand('undo');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editableShts]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.current.length > 0) {
+      const next = redoStack.current.pop();
+      setTextBoxes(cur => { undoStack.current.push({ textBoxes: cur, editableShts: editableShts }); return next.textBoxes; });
+      if (next.editableShts !== undefined) setEditableShts(next.editableShts);
+    } else {
+      document.execCommand('redo');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editableShts]);
+
+  /* Keep refs in sync */
+  useEffect(() => { pageScaleRef.current = pageScale; }, [pageScale]);
+  useEffect(() => { tbsRef.current = textBoxes; }, [textBoxes]);
+  useEffect(() => { editableShtsRef.current = editableShts; }, [editableShts]);
+
+  /* Keyboard shortcuts */
+  useEffect(() => {
+    if (!isEditing) return;
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+        e.preventDefault(); handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+        e.preventDefault(); handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isEditing, handleUndo, handleRedo]);
+
   const addTextBox = useCallback(() => {
-    setTextBoxes(prev => [...prev, {
-      id: Date.now(),
-      x: 40, y: 80 + prev.length * 70,
-      text: 'Text box — click to edit',
-    }]);
-  }, []);
+    setTextBoxes(prev => {
+      undoStack.current.push({ textBoxes: prev, editableShts: editableShts });
+      if (undoStack.current.length > 50) undoStack.current.shift();
+      redoStack.current = [];
+      return [...prev, { id: Date.now(), x: 60, y: 100, html: 'Text box — click to edit' }];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editableShts]);
 
   const startDrag = useCallback((e, tb) => {
-    dragRef.current = { id: tb.id, startX: e.clientX, startY: e.clientY, origX: tb.x, origY: tb.y };
+    dragRef.current = { id: tb.id, startX: e.clientX, startY: e.clientY, origX: tb.x, origY: tb.y, preDragTBs: tbsRef.current };
     e.preventDefault();
   }, []);
 
@@ -889,11 +940,26 @@ const AttendancePrint = () => {
     const onMove = (e) => {
       if (!dragRef.current) return;
       const { id, startX, startY, origX, origY } = dragRef.current;
+      const sc = pageScaleRef.current || 1;
       setTextBoxes(prev => prev.map(tb =>
-        tb.id === id ? { ...tb, x: origX + (e.clientX - startX), y: origY + (e.clientY - startY) } : tb
+        tb.id === id ? { ...tb, x: origX + (e.clientX - startX) / sc, y: origY + (e.clientY - startY) / sc } : tb
       ));
     };
-    const onUp = () => { dragRef.current = null; };
+    const onUp = () => {
+      const dr = dragRef.current;
+      if (dr?.preDragTBs) {
+        setTextBoxes(curr => {
+          const moved = curr.find(t => t.id === dr.id);
+          if (moved && (Math.abs(moved.x - dr.origX) > 1 || Math.abs(moved.y - dr.origY) > 1)) {
+            undoStack.current.push({ textBoxes: dr.preDragTBs, editableShts: editableShtsRef.current });
+            if (undoStack.current.length > 50) undoStack.current.shift();
+            redoStack.current = [];
+          }
+          return curr;
+        });
+      }
+      dragRef.current = null;
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup',   onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
@@ -1023,9 +1089,15 @@ const AttendancePrint = () => {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: allocation
-      ? `AttendanceSheet_${allocation.examName}_${allocation.academicYear}`
-      : 'AttendanceSheet',
+    documentTitle: (() => {
+      if (!allocation) return 'AttendanceSheet';
+      const year  = allocation.year
+        ? `${allocation.year} Year`
+        : (allocation.yearSemester || '').split('/')[0].trim();
+      const exam  = allocation.examName || '';
+      const batch = (allocation.academicYear || '').replace(/-/g, '\u2013');
+      return `${year} Attendance Sheet \u2013 ${exam} (${batch} Batch)`;
+    })(),
   });
 
   /* ── Build sheet list ── */
@@ -1158,17 +1230,32 @@ const AttendancePrint = () => {
     setRowColMode(v => !v);
   };
 
-  const rcAddRow = (sheetIdx) =>
+  const pushEditUndo = useCallback(() => {
+    setEditableShts(cur => {
+      undoStack.current.push({ textBoxes, editableShts: cur });
+      if (undoStack.current.length > 50) undoStack.current.shift();
+      redoStack.current = [];
+      return cur;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textBoxes]);
+
+  const rcAddRow = (sheetIdx) => {
+    pushEditUndo();
     setEditableShts(prev => prev.map((s, i) => i !== sheetIdx ? s : {
       ...s, students: [...s.students, { registerNo: '', name: '', section: '', sNo: '' }],
     }));
+  };
 
-  const rcDeleteRow = (sheetIdx, rowIdx) =>
+  const rcDeleteRow = (sheetIdx, rowIdx) => {
+    pushEditUndo();
     setEditableShts(prev => prev.map((s, i) => i !== sheetIdx ? s : {
       ...s, students: s.students.filter((_, ri) => ri !== rowIdx),
     }));
+  };
 
-  const rcAddCol = (sheetIdx) =>
+  const rcAddCol = (sheetIdx) => {
+    pushEditUndo();
     setEditableShts(prev => prev.map((s, i) => {
       if (i !== sheetIdx) return s;
       const last = s.dateCols[s.dateCols.length - 1];
@@ -1177,11 +1264,14 @@ const AttendancePrint = () => {
       if (next.getDay() === 0) next.setDate(next.getDate() + 1);
       return { ...s, dateCols: [...s.dateCols, { date: next, session: last?.session || 'FN' }] };
     }));
+  };
 
-  const rcDeleteCol = (sheetIdx, colIdx) =>
+  const rcDeleteCol = (sheetIdx, colIdx) => {
+    pushEditUndo();
     setEditableShts(prev => prev.map((s, i) => i !== sheetIdx ? s : {
       ...s, dateCols: s.dateCols.filter((_, ci) => ci !== colIdx),
     }));
+  };
 
   const rcUpdateCell = (sheetIdx, rowIdx, field, value) =>
     setEditableShts(prev => prev.map((s, i) => i !== sheetIdx ? s : {
@@ -1418,6 +1508,10 @@ const AttendancePrint = () => {
             flexWrap:'wrap', margin:'0 auto 10px', maxWidth:'100%',
             boxShadow:'0 2px 12px rgba(180,43,106,0.08)',
           }}>
+            {/* Undo / Redo */}
+            <button title="Undo (Ctrl+Z)" style={TB} onMouseDown={e=>{e.preventDefault();handleUndo();}} onMouseEnter={tbHover} onMouseLeave={tbLeave}><FiRotateCcw size={13}/></button>
+            <button title="Redo (Ctrl+Y)" style={TB} onMouseDown={e=>{e.preventDefault();handleRedo();}} onMouseEnter={tbHover} onMouseLeave={tbLeave}><FiRotateCw size={13}/></button>
+            <Sep />
             {[
               { label:<b style={{fontFamily:'Georgia,serif',fontSize:'14px'}}>B</b>, cmd:'bold',        title:'Bold (Ctrl+B)' },
               { label:<i style={{fontFamily:'Georgia,serif',fontSize:'14px'}}>I</i>,  cmd:'italic',      title:'Italic (Ctrl+I)' },
@@ -1549,7 +1643,7 @@ const AttendancePrint = () => {
           {/* Printable A4 pages — always in DOM so printing works.
               Hidden from screen while the Excel editor is open. */}
           <div ref={containerRef} className="print-page-outer" style={{ padding: '24px 16px', ...(rowColMode ? { display: 'none' } : {}) }}>
-            <div ref={printRef} style={{ position: 'relative' }}>
+            <div ref={printRef} className="print-ref-inner" style={{ position: 'relative', width: '210mm', zoom: pageScale, margin: '0 auto' }}>
               {displaySheets.map((sheet, idx) => (
                 <div
                   key={idx}
@@ -1564,14 +1658,12 @@ const AttendancePrint = () => {
                       ? '0 0 0 2px #B42B6A, 0 8px 40px rgba(0,0,0,0.12)'
                       : '0 8px 40px rgba(0,0,0,0.12)',
                     borderRadius: '4px',
-                    margin: '0 auto 20px',
+                    margin: '0 0 20px',
                     boxSizing: 'border-box',
                     overflow: 'visible',
                     outline: 'none',
                     cursor: dragMode ? 'grab' : 'default',
                     transition: 'box-shadow 0.2s',
-                    zoom: pageScale,
-                    transformOrigin: 'top left',
                   }}
                 >
                   <AttendanceSheetPage
@@ -1595,7 +1687,7 @@ const AttendancePrint = () => {
                   style={{
                     position:'absolute', left:tb.x, top:tb.y,
                     minWidth:'120px', minHeight:'32px',
-                    border: isEditing ? '1.5px dashed #B42B6A' : '1px solid #333',
+                    border: isEditing ? '1.5px dashed #B42B6A' : 'none',
                     background:'white', zIndex:20, borderRadius:'3px',
                     boxShadow: isEditing ? '0 2px 10px rgba(180,43,106,0.18)' : 'none',
                     cursor: isEditing ? 'move' : 'default',
@@ -1605,7 +1697,7 @@ const AttendancePrint = () => {
                   {isEditing && (
                     <button
                       className="no-print"
-                      onClick={e => { e.stopPropagation(); setTextBoxes(prev => prev.filter(t => t.id !== tb.id)); }}
+                      onClick={e => { e.stopPropagation(); setTextBoxes(prev => { undoStack.current.push({ textBoxes: prev, editableShts: editableShts }); redoStack.current = []; return prev.filter(t => t.id !== tb.id); }); }}
                       onMouseDown={e => e.stopPropagation()}
                       style={{
                         position:'absolute', top:-10, right:-10,
@@ -1618,17 +1710,17 @@ const AttendancePrint = () => {
                     >×</button>
                   )}
                   <div
-                    contentEditable={isEditing}
+                    contentEditable={isEditing ? 'true' : 'false'}
                     suppressContentEditableWarning={true}
                     onMouseDown={e => e.stopPropagation()}
+                    onBlur={e => { const h = e.currentTarget.innerHTML; setTextBoxes(p => p.map(t => t.id === tb.id ? { ...t, html: h } : t)); }}
+                    dangerouslySetInnerHTML={{ __html: tb.html || '' }}
                     style={{
                       padding:'6px 10px', minHeight:'28px',
-                      fontFamily:PRINT_FONT, fontSize:'10pt',
+                      fontFamily:PRINT_FONT, fontSize:'10pt', fontWeight:'bold',
                       outline:'none', cursor:'text', whiteSpace:'pre-wrap',
                     }}
-                  >
-                    {tb.text}
-                  </div>
+                  />
                 </div>
               ))}
             </div>
@@ -2074,6 +2166,15 @@ const AttendancePrint = () => {
           .print-page-outer {
             padding: 0 !important;
           }
+          .print-ref-inner {
+            zoom: 1 !important;
+            margin: 0 !important;
+            width: 210mm !important;
+          }
+          [data-textbox] {
+            border: none !important;
+            box-shadow: none !important;
+          }
           .attendance-sheet-page {
             box-shadow: none !important;
             border-radius: 0 !important;
@@ -2083,8 +2184,15 @@ const AttendancePrint = () => {
             max-height: 297mm;
             page-break-after: always;
             page-break-inside: avoid;
-            zoom: 1 !important;
             overflow: visible !important;
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .attendance-sheet-page * {
+            color: #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .attendance-sheet-page:last-child {
             page-break-after: auto;

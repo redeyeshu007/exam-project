@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import { FiArrowLeft, FiPrinter, FiEdit2, FiSave, FiXCircle, FiAlignLeft, FiAlignCenter, FiAlignRight, FiType, FiMove } from 'react-icons/fi';
+import { FiArrowLeft, FiPrinter, FiEdit2, FiSave, FiXCircle, FiAlignLeft, FiAlignCenter, FiAlignRight, FiType, FiMove, FiRotateCcw, FiRotateCw } from 'react-icons/fi';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -20,13 +20,66 @@ const HallPlanPrint = () => {
   const containerRef   = useRef();
   const userZoomedRef  = useRef(false);
   const [pageScale,    setPageScale]  = useState(1);
+  const pageScaleRef   = useRef(1);
+  const tbsRef         = useRef([]);
 
   const fmt = useCallback((cmd, val) => { document.execCommand(cmd, false, val ?? null); }, []);
-  const addTextBox = useCallback(() => {
-    setTextBoxes(prev => [...prev, { id: Date.now(), x: 40, y: 80 + prev.length * 70, text: 'Text box — click to edit' }]);
+
+  /* ── Undo / Redo for textBoxes ── */
+  const undoStack = useRef([]);
+  const redoStack = useRef([]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.current.length > 0) {
+      setTextBoxes(current => {
+        redoStack.current.push(current);
+        return undoStack.current.pop();
+      });
+    } else {
+      document.execCommand('undo');
+    }
   }, []);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.current.length > 0) {
+      setTextBoxes(current => {
+        undoStack.current.push(current);
+        return redoStack.current.pop();
+      });
+    } else {
+      document.execCommand('redo');
+    }
+  }, []);
+
+  /* Keep refs in sync */
+  useEffect(() => { pageScaleRef.current = pageScale; }, [pageScale]);
+  useEffect(() => { tbsRef.current = textBoxes; }, [textBoxes]);
+
+  /* Keyboard shortcuts: Ctrl+Z = undo, Ctrl+Y / Ctrl+Shift+Z = redo */
+  useEffect(() => {
+    if (!isEditing) return;
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+        e.preventDefault(); handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+        e.preventDefault(); handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isEditing, handleUndo, handleRedo]);
+
+  const addTextBox = useCallback(() => {
+    setTextBoxes(prev => {
+      undoStack.current.push(prev);
+      if (undoStack.current.length > 50) undoStack.current.shift();
+      redoStack.current = [];
+      return [...prev, { id: Date.now(), x: 60, y: 100, html: 'Text box — click to edit' }];
+    });
+  }, []);
+
   const startDrag = useCallback((e, tb) => {
-    dragRef.current = { id: tb.id, startX: e.clientX, startY: e.clientY, origX: tb.x, origY: tb.y };
+    dragRef.current = { id: tb.id, startX: e.clientX, startY: e.clientY, origX: tb.x, origY: tb.y, preDragTBs: tbsRef.current };
     e.preventDefault();
   }, []);
   useEffect(() => {
@@ -34,9 +87,24 @@ const HallPlanPrint = () => {
     const onMove = (e) => {
       if (!dragRef.current) return;
       const { id, startX, startY, origX, origY } = dragRef.current;
-      setTextBoxes(prev => prev.map(tb => tb.id === id ? { ...tb, x: origX + (e.clientX - startX), y: origY + (e.clientY - startY) } : tb));
+      const sc = pageScaleRef.current || 1;
+      setTextBoxes(prev => prev.map(tb => tb.id === id ? { ...tb, x: origX + (e.clientX - startX) / sc, y: origY + (e.clientY - startY) / sc } : tb));
     };
-    const onUp = () => { dragRef.current = null; };
+    const onUp = () => {
+      const dr = dragRef.current;
+      if (dr?.preDragTBs) {
+        setTextBoxes(curr => {
+          const moved = curr.find(t => t.id === dr.id);
+          if (moved && (Math.abs(moved.x - dr.origX) > 1 || Math.abs(moved.y - dr.origY) > 1)) {
+            undoStack.current.push(dr.preDragTBs);
+            if (undoStack.current.length > 50) undoStack.current.shift();
+            redoStack.current = [];
+          }
+          return curr;
+        });
+      }
+      dragRef.current = null;
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup',   onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
@@ -126,6 +194,29 @@ const HallPlanPrint = () => {
   const zoomIn  = () => { userZoomedRef.current = true; setPageScale(s => Math.min(2,   Math.round((s + 0.1) * 10) / 10)); };
   const zoomOut = () => { userZoomedRef.current = true; setPageScale(s => Math.max(0.25, Math.round((s - 0.1) * 10) / 10)); };
 
+  /* ── Auto-scale Hall Plan content to fit within one A4 page when editing ── */
+  const hallOutputRef = useRef(null);
+  useEffect(() => {
+    const el = hallOutputRef.current;
+    if (!el) return;
+    // A4 page at 96dpi: 297mm = ~1122px, account for padding 14mm+14mm (~105px)
+    const MAX_H = (297 - 28) * 3.7795;
+
+    const adjust = () => {
+      el.style.fontSize = ''; // reset any previous scaling
+      const naturalH = el.scrollHeight;
+      if (naturalH > MAX_H * 1.02) {
+        const ratio = MAX_H / naturalH;
+        const pct = Math.max(70, Math.floor(ratio * 100));
+        el.style.fontSize = `${pct}%`;
+      }
+    };
+
+    const ro = new ResizeObserver(adjust);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     const fetchAllocation = async () => {
       try {
@@ -143,7 +234,15 @@ const HallPlanPrint = () => {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `HallPlan_${allocation?.examName}_${allocation?.academicYear}`
+    documentTitle: (() => {
+      if (!allocation) return 'HallPlan';
+      const year  = allocation.year
+        ? `${allocation.year} Year`
+        : (allocation.yearSemester || '').split('/')[0].trim();
+      const exam  = allocation.examName || '';
+      const batch = (allocation.academicYear || '').replace(/-/g, '\u2013');
+      return `${year} Hall Plan \u2013 ${exam} (${batch} Batch)`;
+    })()
   });
 
   if (loading) {
@@ -188,6 +287,7 @@ const HallPlanPrint = () => {
   const tdStyle = {
     fontFamily: PRINT_FONT,
     fontSize: '10.5pt',
+    fontWeight: 'bold',
     padding: '6px 10px',
     textAlign: 'center',
     border: '1px solid #000',
@@ -199,7 +299,7 @@ const HallPlanPrint = () => {
       <h2 style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '15pt', margin: '0 0 3px 0', color: '#000' }}>
         PSNA COLLEGE OF ENGINEERING AND TECHNOLOGY, DINDIGUL
       </h2>
-      <p style={{ fontFamily: PRINT_FONT, fontSize: '12pt', fontWeight: 'normal', margin: '0 0 6px 0', color: '#000' }}>
+      <p style={{ fontFamily: PRINT_FONT, fontSize: '12pt', fontWeight: 'bold', margin: '0 0 6px 0', color: '#000' }}>
         (An Autonomous Institution affiliated to Anna University)
       </p>
       <p style={{ fontFamily: PRINT_FONT, fontSize: '11.5pt', fontWeight: 'bold', margin: '0 0 10px 0', color: '#000' }}>
@@ -209,7 +309,7 @@ const HallPlanPrint = () => {
         <p style={{ fontFamily: PRINT_FONT, fontSize: '13.5pt', fontWeight: 'bold', textTransform: 'uppercase', margin: '0 0 2px 0', color: '#000' }}>
           {allocation.examName}
         </p>
-        <p style={{ fontFamily: PRINT_FONT, fontSize: '11pt', fontWeight: 'normal', margin: '0', color: '#000' }}>
+        <p style={{ fontFamily: PRINT_FONT, fontSize: '11pt', fontWeight: 'bold', margin: '0', color: '#000' }}>
           {subtitle}
         </p>
       </div>
@@ -285,6 +385,10 @@ const HallPlanPrint = () => {
         const Sep = () => <div style={{ width:1,height:20,background:'#E8E2E5',margin:'0 4px',flexShrink:0 }} />;
         return (
           <div className="no-print mb-3 print-editor-toolbar" style={{ maxWidth:'100%',background:'white',border:'1.5px solid #E8E2E5',borderRadius:'12px',padding:'6px 12px',display:'flex',alignItems:'center',gap:'2px',flexWrap:'wrap',boxShadow:'0 2px 12px rgba(180,43,106,0.08)' }}>
+            {/* Undo / Redo */}
+            <button title="Undo (Ctrl+Z)" style={TB} onMouseDown={e=>{e.preventDefault();handleUndo();}} onMouseEnter={tbHov} onMouseLeave={tbLv}><FiRotateCcw size={13}/></button>
+            <button title="Redo (Ctrl+Y)" style={TB} onMouseDown={e=>{e.preventDefault();handleRedo();}} onMouseEnter={tbHov} onMouseLeave={tbLv}><FiRotateCw size={13}/></button>
+            <Sep />
             {[{label:<b style={{fontFamily:'Georgia,serif',fontSize:'14px'}}>B</b>,cmd:'bold',title:'Bold'},{label:<i style={{fontFamily:'Georgia,serif',fontSize:'14px'}}>I</i>,cmd:'italic',title:'Italic'},{label:<u style={{fontSize:'13px'}}>U</u>,cmd:'underline',title:'Underline'},{label:<s style={{fontSize:'13px'}}>S</s>,cmd:'strikeThrough',title:'Strikethrough'}].map(({label,cmd,title})=>(
               <button key={cmd} title={title} style={TB} onMouseDown={e=>{e.preventDefault();fmt(cmd);}} onMouseEnter={tbHov} onMouseLeave={tbLv}>{label}</button>
             ))}
@@ -319,16 +423,15 @@ const HallPlanPrint = () => {
 
       {/* Printable Area */}
       <div ref={containerRef} className="print-page-outer">
-      <div ref={printRef} style={{ position:'relative' }}>
+      <div ref={printRef} className="print-ref-inner" style={{ position:'relative', width:'210mm', zoom: pageScale, margin:'0 auto' }}>
       <div
-        className="hall-plan-output bg-white mx-auto"
+        ref={hallOutputRef}
+        className="hall-plan-output bg-white"
         contentEditable={isEditing}
         suppressContentEditableWarning={true}
         style={{
           width: '210mm',
           minHeight: '297mm',
-          zoom: pageScale,
-          transformOrigin: 'top left',
           padding: '14mm 16mm',
           boxSizing: 'border-box',
           color: '#000',
@@ -527,15 +630,18 @@ const HallPlanPrint = () => {
 
       {/* ── Floating text boxes ── */}
       {textBoxes.map(tb => (
-        <div key={tb.id} data-textbox="1" style={{ position:'absolute',left:tb.x,top:tb.y,minWidth:'120px',minHeight:'32px',border:isEditing?'1.5px dashed #B42B6A':'1px solid #333',background:'white',zIndex:20,borderRadius:'3px',boxShadow:isEditing?'0 2px 10px rgba(180,43,106,0.18)':'none',cursor:isEditing?'move':'default' }}
+        <div key={tb.id} data-textbox="1" style={{ position:'absolute',left:tb.x,top:tb.y,minWidth:'120px',minHeight:'32px',border:isEditing?'1.5px dashed #B42B6A':'none',background:'white',zIndex:20,borderRadius:'3px',boxShadow:isEditing?'0 2px 10px rgba(180,43,106,0.18)':'none',cursor:isEditing?'move':'default' }}
           onMouseDown={e=>{if(!isEditing)return;e.stopPropagation();startDrag(e,tb);}}>
           {isEditing && (
-            <button className="no-print" onClick={e=>{e.stopPropagation();setTextBoxes(prev=>prev.filter(t=>t.id!==tb.id));}} onMouseDown={e=>e.stopPropagation()}
+            <button className="no-print" onClick={e=>{e.stopPropagation();setTextBoxes(prev=>{undoStack.current.push(prev);redoStack.current=[];return prev.filter(t=>t.id!==tb.id);});}} onMouseDown={e=>e.stopPropagation()}
               style={{position:'absolute',top:-10,right:-10,width:20,height:20,borderRadius:'50%',border:'none',background:'#B42B6A',color:'white',fontSize:'14px',lineHeight:1,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 1px 4px rgba(0,0,0,0.25)'}}>×</button>
           )}
-          <div contentEditable={isEditing} suppressContentEditableWarning={true} onMouseDown={e=>e.stopPropagation()}
-            style={{padding:'6px 10px',minHeight:'28px',fontFamily:PRINT_FONT,fontSize:'10pt',outline:'none',cursor:'text',whiteSpace:'pre-wrap'}}
-          >{tb.text}</div>
+          <div contentEditable={isEditing ? 'true' : 'false'} suppressContentEditableWarning={true}
+            onMouseDown={e=>e.stopPropagation()}
+            onBlur={e=>{const h=e.currentTarget.innerHTML;setTextBoxes(p=>p.map(t=>t.id===tb.id?{...t,html:h}:t));}}
+            dangerouslySetInnerHTML={{ __html: tb.html || '' }}
+            style={{padding:'6px 10px',minHeight:'28px',fontFamily:PRINT_FONT,fontSize:'10pt',fontWeight:'bold',outline:'none',cursor:'text',whiteSpace:'pre-wrap'}}
+          />
         </div>
       ))}
       </div>{/* end printRef wrapper */}
@@ -554,13 +660,21 @@ const HallPlanPrint = () => {
           .no-print {
             display: none !important;
           }
+          .print-ref-inner {
+            zoom: 1 !important;
+            margin: 0 !important;
+            width: 210mm !important;
+          }
           .hall-plan-output {
             box-shadow: none !important;
             border-radius: 0 !important;
             margin: 0 !important;
-            width: 100% !important;
-            min-height: auto !important;
-            zoom: 1 !important;
+            width: 210mm !important;
+            font-size: 100% !important;
+          }
+          [data-textbox] {
+            border: none !important;
+            box-shadow: none !important;
           }
         }
       `}</style>
