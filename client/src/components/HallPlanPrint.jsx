@@ -194,28 +194,51 @@ const HallPlanPrint = () => {
   const zoomIn  = () => { userZoomedRef.current = true; setPageScale(s => Math.min(2,   Math.round((s + 0.1) * 10) / 10)); };
   const zoomOut = () => { userZoomedRef.current = true; setPageScale(s => Math.max(0.25, Math.round((s - 0.1) * 10) / 10)); };
 
-  /* ── Auto-scale Hall Plan content to fit within one A4 page when editing ── */
+  /* ── Auto-scale Hall Plan PAGE 1 content to STRICTLY fit one A4 page ──
+     Strategy: each "page" div is wrapped with className "single-page-fit"
+     and we scale ITS first child via CSS transform until scrollHeight <= MAX_H.
+     This adjusts font size, row height, padding and margins proportionally
+     while preserving readability. Used both in editor preview and print. */
   const hallOutputRef = useRef(null);
   useEffect(() => {
-    const el = hallOutputRef.current;
-    if (!el) return;
-    // A4 page at 96dpi: 297mm = ~1122px, account for padding 14mm+14mm (~105px)
-    const MAX_H = (297 - 28) * 3.7795;
+    const root = hallOutputRef.current;
+    if (!root) return;
 
-    const adjust = () => {
-      el.style.fontSize = ''; // reset any previous scaling
-      const naturalH = el.scrollHeight;
-      if (naturalH > MAX_H * 1.02) {
-        const ratio = MAX_H / naturalH;
-        const pct = Math.max(70, Math.floor(ratio * 100));
-        el.style.fontSize = `${pct}%`;
-      }
+    // A4 inner usable height at 96dpi: 297mm full, minus 14mm + 14mm padding
+    const MAX_H_PX = (297 - 28) * 3.7795;
+
+    const fitPage = (pageEl) => {
+      const inner = pageEl.querySelector('.page-inner');
+      if (!inner) return;
+      // reset any prior transform
+      inner.style.transform = '';
+      inner.style.transformOrigin = 'top left';
+      inner.style.width = '';
+      const natural = inner.scrollHeight;
+      if (natural <= MAX_H_PX) return;
+      // Compute scale, never below 0.55 to keep readable
+      const scale = Math.max(0.55, MAX_H_PX / natural);
+      inner.style.transform = `scale(${scale})`;
+      // Compensate width so scaled content still fills horizontally
+      inner.style.width = `${100 / scale}%`;
     };
 
-    const ro = new ResizeObserver(adjust);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    const adjustAll = () => {
+      root.querySelectorAll('.single-page-fit').forEach(fitPage);
+    };
+
+    adjustAll();
+    const ro = new ResizeObserver(adjustAll);
+    ro.observe(root);
+    // also re-run on window resize / before print
+    window.addEventListener('resize', adjustAll);
+    window.addEventListener('beforeprint', adjustAll);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', adjustAll);
+      window.removeEventListener('beforeprint', adjustAll);
+    };
+  }, [allocation, isEditing]);
 
   useEffect(() => {
     const fetchAllocation = async () => {
@@ -430,21 +453,29 @@ const HallPlanPrint = () => {
         contentEditable={isEditing}
         suppressContentEditableWarning={true}
         style={{
-          width: '210mm',
-          minHeight: '297mm',
-          padding: '14mm 16mm',
-          boxSizing: 'border-box',
           color: '#000',
           fontFamily: PRINT_FONT,
+          outline: 'none',
+          cursor: dragMode ? 'grab' : 'text',
+        }}
+      >
+      <div
+        className="single-page-fit"
+        style={{
+          width: '210mm',
+          height: '297mm',
+          boxSizing: 'border-box',
+          background: 'white',
           boxShadow: isEditing
             ? '0 0 0 2px #B42B6A, 0 8px 40px rgba(0,0,0,0.12)'
             : '0 8px 40px rgba(0,0,0,0.12)',
           borderRadius: '4px',
-          outline: 'none',
-          cursor: dragMode ? 'grab' : 'text',
-          transition: 'box-shadow 0.2s',
+          overflow: 'hidden',
+          marginBottom: '16px',
+          position: 'relative',
         }}
       >
+        <div className="page-inner" style={{ padding: '14mm 16mm', boxSizing: 'border-box' }}>
         {/* Page 1 Header */}
         <PageHeader subtitle={`HALL PLAN - CSE (${allocation.academicYear}) ${allocation.semesterType}`} />
 
@@ -542,10 +573,29 @@ const HallPlanPrint = () => {
           </div>
         </div>
 
+        </div>{/* end page-inner Page1 */}
+        </div>{/* end single-page-fit Page1 */}
+
         {/* ========== ELECTIVE PAGES ========== */}
         {isElective && electiveSubjects.length > 0 && (
-          <>
-            <div style={{ pageBreakBefore: 'always' }} />
+          <div
+            className="single-page-fit"
+            style={{
+              width: '210mm',
+              height: '297mm',
+              boxSizing: 'border-box',
+              background: 'white',
+              boxShadow: isEditing
+                ? '0 0 0 2px #B42B6A, 0 8px 40px rgba(0,0,0,0.12)'
+                : '0 8px 40px rgba(0,0,0,0.12)',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              pageBreakBefore: 'always',
+              breakBefore: 'page',
+              position: 'relative',
+            }}
+          >
+            <div className="page-inner" style={{ padding: '14mm 16mm', boxSizing: 'border-box' }}>
             <PageHeader subtitle={`ELECTIVE SUBJECT DETAILS - CSE (${allocation.academicYear}) ${allocation.semesterType}`} />
 
             <p style={{ fontFamily: PRINT_FONT, fontWeight: 'bold', fontSize: '12pt', textTransform: 'uppercase', textAlign: 'center', margin: '16px 0 10px' }}>
@@ -624,7 +674,8 @@ const HallPlanPrint = () => {
                 HOD-CSE
               </div>
             </div>
-          </>
+            </div>{/* end page-inner Elective */}
+          </div>
         )}
       </div>
 
@@ -648,6 +699,28 @@ const HallPlanPrint = () => {
       </div>{/* end print-page-outer */}
 
       <style>{`
+        .single-page-fit {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-after: always;
+          break-after: page;
+        }
+        .single-page-fit:last-child {
+          page-break-after: auto;
+          break-after: auto;
+        }
+        .single-page-fit > .page-inner {
+          width: 100%;
+          height: 100%;
+        }
+        /* Tables inside auto-fit pages must NOT split */
+        .single-page-fit table,
+        .single-page-fit tr,
+        .single-page-fit thead,
+        .single-page-fit tbody {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
         @media print {
           @page {
             size: A4 portrait;
@@ -671,6 +744,14 @@ const HallPlanPrint = () => {
             margin: 0 !important;
             width: 210mm !important;
             font-size: 100% !important;
+          }
+          .single-page-fit {
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            overflow: hidden !important;
           }
           [data-textbox] {
             border: none !important;

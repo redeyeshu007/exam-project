@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import StepExamDetails from './StepExamDetails';
 import StepSections from './StepSections';
@@ -10,31 +10,56 @@ import api from '../services/api';
 
 const AllocationWizard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Edit mode: when History redirects here with an existing allocation,
+  // prefill all fields and remember the source id so we can replace it.
+  const editAllocation = location.state?.editAllocation || null;
+  const [editingId, setEditingId] = useState(editAllocation?._id || null);
+
+  const buildInitialForm = () => {
+    if (!editAllocation) {
+      return {
+        examName: '', academicYear: '', year: '', semester: '',
+        semesterType: '', yearSemester: '', session: '', sessionTime: '',
+        fromDate: '', toDate: '',
+        sections: [], halls: [],
+        studentData: null, electiveSubjects: null, sectionElectiveCounts: null,
+        hasElectives: false,
+      };
+    }
+    const fromDate = editAllocation.fromDate ? String(editAllocation.fromDate).split('T')[0] : '';
+    const toDate   = editAllocation.toDate   ? String(editAllocation.toDate).split('T')[0]   : '';
+    // Reconstruct halls list with capacity for StepHallSelect prefill.
+    const halls = (editAllocation.hallAllocations || []).map(h => ({
+      hallName: h.hallName,
+      capacity: h.totalInHall,
+    }));
+    return {
+      examName:      editAllocation.examName      || '',
+      academicYear:  editAllocation.academicYear  || '',
+      year:          editAllocation.year          || '',
+      semester:      editAllocation.semester      || '',
+      semesterType:  editAllocation.semesterType  || '',
+      yearSemester:  editAllocation.yearSemester  || '',
+      session:       editAllocation.session       || '',
+      sessionTime:   editAllocation.sessionTime   || '',
+      fromDate, toDate,
+      sections: editAllocation.sections || [],
+      halls,
+      studentData:           editAllocation.studentData           || null,
+      electiveSubjects:      editAllocation.electiveSubjects      || null,
+      sectionElectiveCounts: editAllocation.sectionElectiveCounts || null,
+      hasElectives:          !!editAllocation.hasElectives,
+    };
+  };
+
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState('forward');
   const [submitting, setSubmitting] = useState(false);
   const [allocation, setAllocation] = useState(null);
-  const [electiveEnabled, setElectiveEnabled] = useState(false);
+  const [electiveEnabled, setElectiveEnabled] = useState(!!editAllocation?.hasElectives);
 
-  const [formData, setFormData] = useState({
-    examName: '',
-    academicYear: '',
-    year: '',
-    semester: '',
-    semesterType: '',
-    yearSemester: '',
-    session: '',
-    sessionTime: '',
-    fromDate: '',
-    toDate: '',
-    sections: [],
-    halls: [],
-    // Elective-related fields (3rd/4th year)
-    studentData: null,
-    electiveSubjects: null,
-    sectionElectiveCounts: null,
-    hasElectives: false
-  });
+  const [formData, setFormData] = useState(buildInitialForm);
 
   // Determine if electives are active:
   // - III/IV year: always elective
@@ -65,6 +90,17 @@ const AllocationWizard = () => {
 
   const hallStep = isElectiveYear ? 4 : 3;
   const resultStep = isElectiveYear ? 5 : 4;
+
+  // On entering edit mode, start at Step 1 (Exam Details) with everything
+  // pre-filled, so the user can resume the allocation step-by-step.
+  useEffect(() => {
+    if (!editAllocation) return;
+    setCurrentStep(1);
+    // Clear router state so a page refresh doesn't re-enter edit mode,
+    // but keep formData/editingId in component state across step changes.
+    navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalStudents = formData.sections.reduce((acc, curr) => acc + (parseInt(curr.strength) || 0), 0);
   const totalCapacity = formData.halls.reduce((acc, curr) => acc + (parseInt(curr.capacity) || 0), 0);
@@ -164,7 +200,13 @@ const AllocationWizard = () => {
       }
 
       const res = await api.post('/allocations', payload);
-      toast.success('Allocation successful!');
+      // If editing an existing allocation, remove the old record so the
+      // updated one replaces it cleanly in the history list.
+      if (editingId) {
+        try { await api.delete(`/allocations/${editingId}`); } catch { /* non-fatal */ }
+        setEditingId(null);
+      }
+      toast.success(editingId ? 'Allocation updated!' : 'Allocation successful!');
       setAllocation(res.data);
       setDirection('forward');
 
@@ -221,6 +263,29 @@ const AllocationWizard = () => {
     <div className="viewport-wrapper">
       <div className="compact-view page-enter">
         <div className="wizard-container">
+
+          {/* ── Edit-mode banner ── */}
+          {editingId && (
+            <div style={{
+              background: 'linear-gradient(135deg, #FDF2F7, #FEF7FB)',
+              border: '1px solid rgba(180,43,106,0.3)',
+              borderRadius: '12px',
+              padding: '8px 14px',
+              marginBottom: '14px',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#B42B6A',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#B42B6A', display: 'inline-block',
+              }} />
+              Editing existing allocation — pre-filled below. Continue through each step to update.
+            </div>
+          )}
 
           {/* ── Step Indicator ── */}
           <div className="wizard-steps-bar mb-4">

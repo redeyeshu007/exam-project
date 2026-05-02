@@ -126,6 +126,8 @@ const buildHallStudentsElective = (allocation) => {
             name: seat.studentName || '',
             section: sec,
             sNo: sectionCounter[sec],
+            elective: seat.elective || '',
+            electives: seat.electives || [],
           });
         });
     });
@@ -224,6 +226,76 @@ const AttendanceSheetPage = ({
   allocation, hallName, yearLabel, students, dateCols, isLastPage, isFirstPage, timetableData,
   dateGroupIdx, totalDateGroups, totalDateCols
 }) => {
+  /* ── Per-subject student count for THIS hall (elective only) ──
+     Primary source: allocation.hallSubjectCounts[hallName] — computed
+     server-side from the elective Excel upload and persisted in MongoDB.
+     Fallback: re-derive on the fly from seat-level elective data so the
+     row still renders for older allocations missing hallSubjectCounts.
+
+     Matching is robust:
+       - Normalises to alphanumerics only & uppercase, so "UI/UX",
+         "UI-UX", and "UIUX" all collapse to "UIUX".
+       - A timetable cell may bundle several electives ("UI-UX / TSA",
+         "FDM / RSC / WC"); we split on / , & and render a count for
+         each elective fragment.  */
+  const norm = (s) => String(s || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+  const splitSubjects = (s) =>
+    String(s || '').split(/[\/,&]+/).map(p => p.trim()).filter(Boolean);
+
+  const electiveList   = allocation.electiveSubjects || [];
+  const electiveByKey  = {};
+  electiveList.forEach(s => { electiveByKey[norm(s)] = s; });
+  const hasElectives   = !!allocation.hasElectives && electiveList.length > 0;
+
+  const persistedCounts = (allocation.hallSubjectCounts || {})[hallName] || null;
+  const persistedByKey  = {};
+  if (persistedCounts) {
+    Object.keys(persistedCounts).forEach(k => {
+      persistedByKey[norm(k)] = persistedCounts[k];
+    });
+  }
+
+  // Returns count for a single elective subject (or null if not elective).
+  // Full-hall seat list (not the per-page slice) for accurate fallback counts.
+  const hallSeats =
+    (allocation.seatingChart || []).find(h => h.hallName === hallName)?.seats
+    || [];
+
+  const countForElectiveLabel = (label) => {
+    const key = norm(label);
+    if (!key || !electiveByKey[key]) return null;
+    if (persistedByKey[key] !== undefined) return persistedByKey[key];
+    let count = 0;
+    hallSeats.forEach(seat => {
+      const picks = new Set();
+      if (seat.elective) picks.add(norm(seat.elective));
+      (seat.electives || []).forEach(e => picks.add(norm(e)));
+      if (picks.has(key)) count++;
+    });
+    return count;
+  };
+
+  // For a timetable cell that may bundle multiple electives, return
+  // [{label, count}] for the fragments that ARE elective subjects.
+  const subjectCountsForHall = (subjectCell) => {
+    const parts = splitSubjects(subjectCell);
+    const out = [];
+    parts.forEach(p => {
+      const c = countForElectiveLabel(p);
+      if (c !== null) {
+        // Display the canonical elective name as configured in the
+        // allocation (preserves original casing like "UI/UX"), falling
+        // back to the timetable label if not found.
+        const canonical = electiveByKey[norm(p)] || p;
+        out.push({ label: canonical, count: c });
+      }
+    });
+    return out;
+  };
+
+  const anyElectiveInTimetable = (timetableData || []).some(e =>
+    subjectCountsForHall(e.subject).length > 0
+  );
   const examTitle = `${allocation.examName || ''} (${allocation.academicYear || ''} ${allocation.semesterType || ''})`;
 
   const n    = dateCols.length;
@@ -369,74 +441,163 @@ const AttendanceSheetPage = ({
 
       {/* ── Subject-wise Timetable — bottom of last page of each hall ── */}
       {isLastPage && timetableData && timetableData.length > 0 && (() => {
+        // High-contrast styles tuned for print: pure black ink, thicker
+        // borders, bold/extra-bold weight, and white backgrounds with
+        // `printColorAdjust: exact` so the label cells render crisply.
         const ttCell = {
-          border: '1.5px solid #000',
-          padding: '4px 6px',
+          border: '2px solid #000',
+          padding: '6px 8px',
           textAlign: 'center',
           fontFamily: PRINT_FONT,
-          fontSize: '9pt',
-          fontWeight: 'bold',
+          fontSize: '10pt',
+          fontWeight: 800,
+          color: '#000',
+          backgroundColor: '#fff',
           verticalAlign: 'middle',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          whiteSpace: 'normal',
+          WebkitPrintColorAdjust: 'exact',
+          printColorAdjust: 'exact',
         };
         const ttLabel = {
           ...ttCell,
-          fontWeight: 'bold',
+          fontWeight: 900,
           textAlign: 'left',
-          width: '60px',
-          backgroundColor: '#f0f0f0',
-          WebkitPrintColorAdjust: 'exact',
-          printColorAdjust: 'exact',
+          minWidth: '78px',
+          whiteSpace: 'nowrap',
+          backgroundColor: '#d9dcdf',
+          textTransform: 'uppercase',
+          letterSpacing: '0.3px',
         };
         const ttHeader = {
           ...ttCell,
-          fontWeight: 'bold',
-          backgroundColor: '#f0f0f0',
-          WebkitPrintColorAdjust: 'exact',
-          printColorAdjust: 'exact',
+          fontWeight: 900,
+          backgroundColor: '#d9dcdf',
         };
 
+        // Total students in THIS hall — used for common (non-elective)
+        // subjects where everyone in the hall writes the exam.
+        // NOTE: `students` here is only the row slice for this page chunk
+        // (buildSheets paginates rows), so we must look up the full hall
+        // strength from the authoritative allocation data.
+        const hallStrength =
+          (allocation.hallAllocations || []).find(h => h.hallName === hallName)?.totalInHall
+          ?? (allocation.seatingChart || []).find(h => h.hallName === hallName)?.filled
+          ?? students.length;
+
+        // Build textual summary, mixing electives and common subjects:
+        //   electives → "UI/UX - 12, TSA - 8"
+        //   common    → "IOT - 34" (total hall strength)
+        const summaryParts = [];
+        const seenSummary = new Set();
+        (timetableData || []).forEach(entry => {
+          const electiveItems = subjectCountsForHall(entry.subject);
+          if (electiveItems.length > 0) {
+            electiveItems.forEach(({ label, count }) => {
+              const k = norm(label);
+              if (seenSummary.has(k)) return;
+              seenSummary.add(k);
+              summaryParts.push(`${label} - ${count}`);
+            });
+          } else {
+            // Common subject — single label, full hall strength
+            const label = String(entry.subject || '').trim();
+            const k = norm(label);
+            if (!label || seenSummary.has(k)) return;
+            seenSummary.add(k);
+            summaryParts.push(`${label} - ${hallStrength}`);
+          }
+        });
+
         return (
-          <div className="timetable-inline-section" style={{ marginTop: '10px', pageBreakInside: 'avoid' }}>
+          <div className="timetable-inline-section" style={{ marginTop: '12px', pageBreakInside: 'avoid', color: '#000' }}>
             <div style={{
-              fontFamily: PRINT_FONT, fontSize: '10pt',
-              fontWeight: 'bold', textDecoration: 'underline',
-              marginBottom: '4px',
+              fontFamily: PRINT_FONT, fontSize: '11pt',
+              fontWeight: 900, textDecoration: 'underline',
+              marginBottom: '5px', color: '#000',
+              WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
             }}>
               Subject-wise Timetable
             </div>
-            <table style={{
+            {summaryParts.length > 0 && (
+              <div style={{
+                fontFamily: PRINT_FONT, fontSize: '10.5pt', fontWeight: 800,
+                marginBottom: '7px', color: '#000',
+                WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
+              }}>
+                Number of Students per Subject:&nbsp;{summaryParts.join(', ')}
+              </div>
+            )}
+            <table className="subject-timetable" style={{
               width: '100%', borderCollapse: 'collapse',
-              fontFamily: PRINT_FONT, tableLayout: 'fixed',
+              fontFamily: PRINT_FONT, tableLayout: 'auto',
+              border: '2px solid #000',
+              backgroundColor: '#fff',
+              color: '#000',
+              WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
             }}>
-              <colgroup>
-                <col style={{ width: '60px' }} />
-                {timetableData.map((_, ci) => <col key={ci} />)}
-              </colgroup>
               <tbody>
                 {/* Row 1: Dates */}
                 <tr>
-                  <td style={ttLabel}>Date</td>
+                  <td className="tt-head" style={ttLabel}>Date</td>
                   {timetableData.map((entry, ci) => {
                     const d = new Date(entry.date + 'T00:00:00');
                     const display = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                    return <td key={ci} style={ttHeader}>{display}</td>;
+                    return <td key={ci} className="tt-head" style={ttHeader}>{display}</td>;
                   })}
                 </tr>
                 {/* Row 2: Timing */}
                 <tr>
-                  <td style={ttLabel}>Timing</td>
+                  <td className="tt-head" style={ttLabel}>Timing</td>
                   {timetableData.map((entry, ci) => (
                     <td key={ci} style={ttCell}>{entry.time || '\u2014'}</td>
                   ))}
                 </tr>
                 {/* Row 3: Subject */}
                 <tr>
-                  <td style={ttLabel}>Subject</td>
+                  <td className="tt-head" style={ttLabel}>Subject</td>
                   {timetableData.map((entry, ci) => (
-                    <td key={ci} style={{ ...ttCell, fontWeight: 'bold', fontSize: '9.5pt' }}>
+                    <td key={ci} style={{ ...ttCell, fontWeight: 900, fontSize: '10.5pt' }}>
                       {entry.subject}
                     </td>
                   ))}
+                </tr>
+                {/* Row 4: Per-hall student count.
+                    - Elective cell ("UI-UX / TSA"): one "LABEL - count"
+                      line per elective fragment.
+                    - Common subject cell (IOT, CCS, LA, …): one
+                      "<SUBJECT> - <hallStrength>" line per fragment. */}
+                <tr>
+                  <td className="tt-head" style={ttLabel}>Students</td>
+                  {timetableData.map((entry, ci) => {
+                    const items = subjectCountsForHall(entry.subject);
+                    if (items.length === 0) {
+                      // Non-elective / common subject(s). Render each
+                      // fragment with the full hall strength (e.g. IOT - 20).
+                      const parts = splitSubjects(entry.subject);
+                      const labels = (parts.length > 0 ? parts : [String(entry.subject || '').trim()])
+                        .filter(Boolean);
+                      return (
+                        <td key={ci} style={{ ...ttCell, whiteSpace: 'normal', fontWeight: 900 }}>
+                          {labels.map((lbl, i) => (
+                            <div key={i} style={{ lineHeight: 1.3 }}>
+                              {lbl} - {hallStrength}
+                            </div>
+                          ))}
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={ci} style={{ ...ttCell, whiteSpace: 'normal', fontWeight: 900 }}>
+                        {items.map((it, i) => (
+                          <div key={i} style={{ lineHeight: 1.3 }}>
+                            {it.label} - {it.count}
+                          </div>
+                        ))}
+                      </td>
+                    );
+                  })}
                 </tr>
               </tbody>
             </table>
@@ -2200,6 +2361,32 @@ const AttendancePrint = () => {
           /* Keep timetable section together */
           .timetable-inline-section {
             page-break-inside: avoid !important;
+            color: #000 !important;
+          }
+          /* High-contrast print styling for the subject-wise timetable */
+          .subject-timetable {
+            border: 2px solid #000 !important;
+            background: #fff !important;
+            color: #000 !important;
+            table-layout: auto !important;
+            width: 100% !important;
+          }
+          .subject-timetable td,
+          .subject-timetable th {
+            border: 2px solid #000 !important;
+            background: #fff !important;
+            color: #000 !important;
+            font-weight: 800 !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .subject-timetable td.tt-head,
+          .subject-timetable th.tt-head {
+            background: #d9dcdf !important;
+            font-weight: 900 !important;
           }
           /* Prevent rows from being split across pages */
           tr {

@@ -160,8 +160,24 @@ const History = () => {
     }
   };
 
-  /* ── Edit ── */
-  const openEditModal = (alloc) => {
+  /* ── Edit ──
+     If the allocation already has classroom (hall) data, redirect to the
+     full /allocate wizard pre-filled for editing — the user requested this
+     so classroom allocation changes don't have to fit inside the small
+     metadata-only modal. Allocations without halls fall back to the modal. */
+  const openEditModal = async (alloc) => {
+    const hasClassrooms = Array.isArray(alloc.hallAllocations) && alloc.hallAllocations.length > 0;
+    if (hasClassrooms) {
+      try {
+        // List endpoint omits studentData/seatingChart; fetch the full doc so
+        // the wizard can prefill electives + halls without data loss.
+        const res = await api.get(`/allocations/${alloc._id}`);
+        navigate('/allocate', { state: { editAllocation: res.data } });
+      } catch {
+        toast.error('Failed to load allocation for editing');
+      }
+      return;
+    }
     setEditingAlloc(alloc);
     setEditForm({
       examName:     alloc.examName     || '',
