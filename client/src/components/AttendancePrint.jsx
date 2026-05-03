@@ -329,12 +329,17 @@ const AttendanceSheetPage = ({
 
   return (
     <div
+      className="attendance-sheet-inner"
       style={{
         padding: '12mm 14mm 10mm',
         fontFamily: PRINT_FONT,
         boxSizing: 'border-box',
-        height: '297mm', // Strict A4 height
-        overflow: 'hidden',
+        // Allow the sheet to grow if a tall timetable is appended so content
+        // is never silently clipped on screen. Print CSS still clamps to A4
+        // and uses page-break rules to push overflowing timetables to a new
+        // page. The page-break-inside: avoid on .timetable-inline-section
+        // ensures the timetable is moved as a block, never split.
+        minHeight: '297mm',
         position: 'relative'
       }}
     >
@@ -445,11 +450,12 @@ const AttendanceSheetPage = ({
         // borders, bold/extra-bold weight, and white backgrounds with
         // `printColorAdjust: exact` so the label cells render crisply.
         const ttCell = {
-          border: '2px solid #000',
-          padding: '6px 8px',
+          border: '1.5px solid #000',
+          padding: '3px 5px',
           textAlign: 'center',
           fontFamily: PRINT_FONT,
-          fontSize: '10pt',
+          fontSize: '9pt',
+          lineHeight: 1.2,
           fontWeight: 800,
           color: '#000',
           backgroundColor: '#fff',
@@ -464,11 +470,11 @@ const AttendanceSheetPage = ({
           ...ttCell,
           fontWeight: 900,
           textAlign: 'left',
-          minWidth: '78px',
+          minWidth: '70px',
           whiteSpace: 'nowrap',
           backgroundColor: '#d9dcdf',
           textTransform: 'uppercase',
-          letterSpacing: '0.3px',
+          letterSpacing: '0.2px',
         };
         const ttHeader = {
           ...ttCell,
@@ -511,19 +517,27 @@ const AttendanceSheetPage = ({
         });
 
         return (
-          <div className="timetable-inline-section" style={{ marginTop: '12px', pageBreakInside: 'avoid', color: '#000' }}>
+          <div className="timetable-inline-section" style={{
+            marginTop: '8px',
+            // Guaranteed bottom gap so the timetable never touches the page
+            // edge — strict requirement: minimum 5–8px breathing room.
+            marginBottom: '6px',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid',
+            color: '#000',
+          }}>
             <div style={{
-              fontFamily: PRINT_FONT, fontSize: '11pt',
+              fontFamily: PRINT_FONT, fontSize: '10pt',
               fontWeight: 900, textDecoration: 'underline',
-              marginBottom: '5px', color: '#000',
+              marginBottom: '3px', color: '#000',
               WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
             }}>
               Subject-wise Timetable
             </div>
             {summaryParts.length > 0 && (
               <div style={{
-                fontFamily: PRINT_FONT, fontSize: '10.5pt', fontWeight: 800,
-                marginBottom: '7px', color: '#000',
+                fontFamily: PRINT_FONT, fontSize: '9.5pt', fontWeight: 800,
+                marginBottom: '4px', color: '#000', lineHeight: 1.25,
                 WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
               }}>
                 Number of Students per Subject:&nbsp;{summaryParts.join(', ')}
@@ -558,7 +572,7 @@ const AttendanceSheetPage = ({
                 <tr>
                   <td className="tt-head" style={ttLabel}>Subject</td>
                   {timetableData.map((entry, ci) => (
-                    <td key={ci} style={{ ...ttCell, fontWeight: 900, fontSize: '10.5pt' }}>
+                    <td key={ci} style={{ ...ttCell, fontWeight: 900 }}>
                       {entry.subject}
                     </td>
                   ))}
@@ -581,7 +595,7 @@ const AttendanceSheetPage = ({
                       return (
                         <td key={ci} style={{ ...ttCell, whiteSpace: 'normal', fontWeight: 900 }}>
                           {labels.map((lbl, i) => (
-                            <div key={i} style={{ lineHeight: 1.3 }}>
+                            <div key={i} style={{ lineHeight: 1.15 }}>
                               {lbl} - {hallStrength}
                             </div>
                           ))}
@@ -591,7 +605,7 @@ const AttendanceSheetPage = ({
                     return (
                       <td key={ci} style={{ ...ttCell, whiteSpace: 'normal', fontWeight: 900 }}>
                         {items.map((it, i) => (
-                          <div key={i} style={{ lineHeight: 1.3 }}>
+                          <div key={i} style={{ lineHeight: 1.15 }}>
                             {it.label} - {it.count}
                           </div>
                         ))}
@@ -1276,11 +1290,15 @@ const AttendancePrint = () => {
   //   LAST_ONLY   = last page only   (footer+maybe TT, no header)
   // ────────────────────────────────────────────────────────────────────
   const hasTT = timetableData.length > 0;
-  const FIRST_LAST = hasTT ? 14 : 17;   // Reduced for safety
+  // Tightened when timetable is present to guarantee the timetable's
+  // 4 rows + title + summary line (≈ 55mm) always fit on the same
+  // physical A4 page. Print clamps to 297mm with overflow:hidden, so
+  // any over-estimate here causes the timetable's last row to clip.
+  const FIRST_LAST = hasTT ? 12 : 17;
   const FIRST_ONLY = 20;                 // header overhead, no footer
   const MID        = 23;                 // conservative full page
   // PAGE_SIZE is no longer used for row capacity calculations in buildSheets
-  const LAST_ONLY  = hasTT ? 17 : 20;   // footer + maybe timetable
+  const LAST_ONLY  = hasTT ? 15 : 20;   // footer + maybe timetable
 
   const buildSheets = () => {
     if (!allocation) return [];
@@ -1305,7 +1323,14 @@ const AttendancePrint = () => {
       if (!hallData) return;
       const { students, yearLabel } = hallData;
 
-      // Split students into row chunks
+      // Split students into row chunks.
+      //
+      // Balanced pagination: avoid leaving an orphan (1–4 rows) on the
+      // final page. If the natural split would create a tiny last page,
+      // we pull rows back from the previous page so both pages have a
+      // reasonable number of rows. Minimum rows per non-final page is
+      // bounded by MIN_ORPHAN_AVOID; we never go below half capacity.
+      const MIN_LAST_PAGE_ROWS = 5;
       const rowPages = [];
       let offset = 0;
       const total = students.length;
@@ -1321,21 +1346,40 @@ const AttendancePrint = () => {
           break;
         }
 
-        // Case 2: Fits WITHOUT footer, but NOT with it. 
-        // We MUST split to move the footer to a new page to avoid compression.
+        // Case 2: Fits WITHOUT footer, but NOT with it.
+        // Split so the footer (and any timetable) lives on its own
+        // last page with a healthy number of rows — never just 1.
         const cap = isFirstPage ? FIRST_ONLY : MID;
         if (remaining <= cap) {
-          // Take 'singleCap' students and move the rest to the next page with the footer.
-          const take = Math.max(1, singleCap);
+          // Default: take 'singleCap' rows now, leftover goes to next page.
+          let take = Math.max(1, singleCap);
+          let leftover = remaining - take;
+          // Re-balance if the next (final) page would be too sparse.
+          if (leftover > 0 && leftover < MIN_LAST_PAGE_ROWS) {
+            const minTake = Math.ceil(singleCap / 2);
+            const balancedTake = Math.max(minTake, remaining - MIN_LAST_PAGE_ROWS);
+            take = Math.min(take, balancedTake);
+            take = Math.max(1, take);
+          }
           rowPages.push(students.slice(offset, offset + take));
           offset += take;
           continue;
         }
 
-        // Case 3: Standard lookahead — if leftover fits on a last page, fill current to cap.
+        // Case 3: Leftover would fit on a single last page.
+        // Fill current to cap unless that leaves an orphan; if so,
+        // shrink the current page so the last page has >= MIN_LAST_PAGE_ROWS.
         if (remaining - cap <= LAST_ONLY && remaining - cap > 0) {
-          rowPages.push(students.slice(offset, offset + cap));
-          offset += cap;
+          let take = cap;
+          const leftover = remaining - take;
+          if (leftover < MIN_LAST_PAGE_ROWS) {
+            const minTake = Math.ceil(cap / 2);
+            const balancedTake = Math.max(minTake, remaining - MIN_LAST_PAGE_ROWS);
+            take = Math.min(take, balancedTake);
+            take = Math.max(1, take);
+          }
+          rowPages.push(students.slice(offset, offset + take));
+          offset += take;
           continue;
         }
 
@@ -2341,14 +2385,28 @@ const AttendancePrint = () => {
             border-radius: 0 !important;
             margin: 0 !important;
             width: 210mm !important;
+            /* Hard-clamp to A4 in print: React-side buildSheets() is the
+               sole source of pagination truth. Without max-height the
+               print engine reflows tall sheets across multiple physical
+               pages, producing orphan rows that don't appear in preview.
+               Row capacity is already reserved (LAST_ONLY=17 when a
+               timetable is present) so content fits within 297mm. */
+            height: 297mm !important;
             min-height: 297mm !important;
-            max-height: 297mm;
-            page-break-after: always;
-            page-break-inside: avoid;
-            overflow: visible !important;
+            max-height: 297mm !important;
+            page-break-after: always !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
             color: #000 !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          .attendance-sheet-inner {
+            height: 297mm !important;
+            max-height: 297mm !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
           }
           .attendance-sheet-page * {
             color: #000 !important;
@@ -2358,10 +2416,21 @@ const AttendancePrint = () => {
           .attendance-sheet-page:last-child {
             page-break-after: auto;
           }
-          /* Keep timetable section together */
+          /* Keep timetable section together — if the remaining space on
+             the current page is insufficient, the whole block is moved
+             to a new page rather than splitting or clipping. The bottom
+             margin guarantees breathing room from the page edge. */
           .timetable-inline-section {
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-before: auto !important;
+            margin-bottom: 8px !important;
+            padding-bottom: 2px !important;
             color: #000 !important;
+          }
+          .subject-timetable {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           /* High-contrast print styling for the subject-wise timetable */
           .subject-timetable {

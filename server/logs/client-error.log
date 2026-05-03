@@ -1,0 +1,137 @@
+[2026-04-28 13:55:50] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:55:50] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":43}
+[2026-04-28 13:55:52] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:55:52] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":4}
+[2026-04-28 13:55:57] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:55:57] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":4}
+[2026-04-28 13:57:38] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:38] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":3}
+[2026-04-28 13:57:39] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:39] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":3}
+[2026-04-28 13:57:52] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:52] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":17}
+[2026-04-28 13:57:53] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:53] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":3}
+[2026-04-28 13:57:53] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:53] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":3}
+[2026-04-28 13:57:53] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:53] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":3}
+[2026-04-28 13:57:54] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:54] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":7}
+[2026-04-28 13:57:54] WARN: Admin login failed | {"email":"cseexamcell2023@gmail.com","ip":"::1"}
+[2026-04-28 13:57:54] WARN: POST /api/auth/login | {"status":401,"ip":"::1","ms":4}
+[2026-04-28 13:58:12] WARN: GET /api/auth/me | {"status":401,"ip":"::1","ms":22}
+[2026-04-28 13:58:12] WARN: GET /api/auth/me | {"status":401,"ip":"::1","ms":3}
+[2026-04-28 13:58:15] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":2}
+[2026-04-28 13:58:15] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":1}
+[2026-04-28 13:58:21] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":4}
+[2026-04-28 13:58:21] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":4}
+[2026-04-28 14:18:43] WARN: GET /api/drafts/69d747e8a6fcf357fa72a9d3 | {"status":404,"ip":"::1","ms":9}
+[2026-04-28 14:18:43] WARN: GET /api/drafts/69d747e8a6fcf357fa72a9d3 | {"status":404,"ip":"::1","ms":3}
+[2026-04-28 14:18:54] WARN: GET /api/drafts/69d74499a6fcf357fa72a05c | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 14:18:54] WARN: GET /api/drafts/69d74499a6fcf357fa72a05c | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 14:28:16] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":3}
+[2026-04-28 14:28:16] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":3}
+[2026-04-28 15:39:39] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":4}
+[2026-04-28 15:39:39] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 15:42:57] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 15:42:57] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 15:48:33] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 15:48:39] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":4}
+[2026-04-28 15:48:47] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 15:58:14] WARN: GET /api/drafts/69d73719a6fcf357fa729a94 | {"status":404,"ip":"::1","ms":3}
+[2026-04-28 15:58:14] WARN: GET /api/drafts/69d73719a6fcf357fa729a94 | {"status":404,"ip":"::1","ms":4}
+[2026-04-28 16:01:22] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":2}
+[2026-04-28 16:01:22] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":3}
+[2026-04-28 16:13:35] WARN: GET /api/drafts/69f07562b0a7a5d6e17a371d | {"status":404,"ip":"::1","ms":8}
+[2026-04-30 22:11:11] WARN: GET /api/auth/me | {"status":401,"ip":"::1","ms":18}
+[2026-04-30 22:11:11] WARN: GET /api/auth/me | {"status":401,"ip":"::1","ms":5}
+[2026-04-30 22:11:12] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":2}
+[2026-04-30 22:11:13] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":2}
+[2026-04-30 22:11:14] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":3}
+[2026-04-30 22:11:14] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":3}
+[2026-04-30 22:20:50] WARN: GET /api/drafts/69e1ae5746b961f4d1afa3ff | {"status":404,"ip":"::1","ms":25}
+[2026-04-30 22:20:50] WARN: GET /api/drafts/69e1ae5746b961f4d1afa3ff | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 22:20:59] WARN: GET /api/drafts/69e6350984596c078008b507 | {"status":404,"ip":"::1","ms":4}
+[2026-04-30 22:20:59] WARN: GET /api/drafts/69e6350984596c078008b507 | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 22:21:20] WARN: POST /api/timetable/upload | {"status":400,"ip":"::1","ms":45}
+[2026-04-30 22:40:42] WARN: GET /api/drafts/69e6350984596c078008b507 | {"status":404,"ip":"::1","ms":1}
+[2026-04-30 22:40:57] WARN: GET /api/drafts/69e6350984596c078008b507 | {"status":404,"ip":"::1","ms":2}
+[2026-04-30 22:41:11] WARN: GET /api/drafts/69e6350984596c078008b507 | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 22:56:32] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 22:56:32] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":2}
+[2026-04-30 22:57:18] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 22:57:18] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 23:03:38] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":5}
+[2026-04-30 23:03:38] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":2}
+[2026-04-30 23:17:27] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":2}
+[2026-04-30 23:17:27] WARN: GET /api/drafts/69f39051b21563d6785cde9f | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 23:18:03] WARN: GET /api/auth/me | {"status":401,"ip":"::1","ms":10}
+[2026-04-30 23:18:03] WARN: GET /api/auth/me | {"status":401,"ip":"::1","ms":3}
+[2026-04-30 23:18:06] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":2}
+[2026-04-30 23:18:06] WARN: GET /api/allocations | {"status":401,"ip":"::1","ms":1}
+[2026-04-30 23:19:49] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":4}
+[2026-04-30 23:19:49] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 23:22:39] WARN: ReferenceError: subjectCountForHall is not defined
+    at http://localhost:5173/src/components/AttendancePrint.jsx?t=1777571559029:939:20
+    at Array.map (<anonymous>)
+    at http://localhost:5173/src/components/AttendancePrint.jsx?t=1777571559029:938:33
+    at AttendanceSheetPage (http://localhost:5173/src/components/AttendancePrint.jsx?t=1777571559029:969:6)
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0bf2fc35:12868:12)
+    at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0bf2fc35:4213:19)
+    at updateFunctionComponent (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0bf2fc35:5569:16)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0bf2fc35:6140:20)
+    at runWithFiberInDEV (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0bf2fc35:851:66)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=0bf2fc35:8429:92) | {"source":"client","url":"http://localhost:5173/attendance-print/69f3960bb21563d6785d16be","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"}
+[2026-04-30 23:22:57] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 23:23:18] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":2}
+[2026-04-30 23:34:02] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":4}
+[2026-04-30 23:34:21] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 23:39:34] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-04-30 23:39:49] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":4}
+[2026-04-30 23:46:03] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 09:21:40] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":5}
+[2026-05-01 09:22:01] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":5}
+[2026-05-01 09:31:08] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 09:31:08] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 09:32:12] WARN: GET /api/drafts/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 10:42:08] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 10:42:08] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 10:42:56] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 10:42:56] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":3}
+[2026-05-01 10:50:00] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":2}
+[2026-05-01 10:50:10] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":1}
+[2026-05-01 10:50:15] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":4}
+[2026-05-01 10:50:20] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":1}
+[2026-05-01 10:50:25] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":2}
+[2026-05-01 10:50:35] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":1}
+[2026-05-01 12:25:38] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 09:36:54] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":7}
+[2026-05-02 09:36:54] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 09:45:29] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 09:45:30] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 09:45:30] WARN: GET /api/drafts/69f42e33b21563d6785d7018 | {"status":404,"ip":"::1","ms":5}
+[2026-05-02 09:46:48] WARN: GET /api/drafts/69f3904ab21563d6785cdc7b | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 09:46:48] WARN: GET /api/drafts/69f3904ab21563d6785cdc7b | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 09:51:12] WARN: GET /api/drafts/69f57bb25d2d3514bd8123cc | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 09:51:12] WARN: GET /api/drafts/69f57bb25d2d3514bd8123cc | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 09:53:01] WARN: Allocation not found | {"id":"69f3960bb21563d6785d16be","ip":"::1"}
+[2026-05-02 09:53:01] WARN: GET /api/allocations/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 09:53:01] WARN: Allocation not found | {"id":"69f3960bb21563d6785d16be","ip":"::1"}
+[2026-05-02 09:53:01] WARN: GET /api/allocations/69f3960bb21563d6785d16be | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 10:08:34] WARN: GET /api/drafts/69f57fbc5d2d3514bd8136ee | {"status":404,"ip":"::1","ms":5}
+[2026-05-02 10:08:34] WARN: GET /api/drafts/69f57fbc5d2d3514bd8136ee | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 10:19:52] WARN: GET /api/drafts/69f57fbc5d2d3514bd8136ee | {"status":404,"ip":"::1","ms":1}
+[2026-05-02 10:24:50] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 10:24:50] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 10:31:41] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 10:31:53] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":1}
+[2026-05-02 10:32:48] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":1}
+[2026-05-02 10:33:03] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 10:33:08] WARN: GET /api/drafts/69f583945d2d3514bd813c02 | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 10:35:10] WARN: GET /api/drafts/69f57fbc5d2d3514bd8136ee | {"status":404,"ip":"::1","ms":4}
+[2026-05-02 10:35:10] WARN: GET /api/drafts/69f57fbc5d2d3514bd8136ee | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 10:36:05] WARN: GET /api/drafts/69f57bb25d2d3514bd8123cc | {"status":404,"ip":"::1","ms":4}
+[2026-05-02 10:36:05] WARN: GET /api/drafts/69f57bb25d2d3514bd8123cc | {"status":404,"ip":"::1","ms":3}
+[2026-05-02 10:37:24] WARN: GET /api/drafts/69f586845d2d3514bd814fda | {"status":404,"ip":"::1","ms":2}
+[2026-05-02 10:37:24] WARN: GET /api/drafts/69f586845d2d3514bd814fda | {"status":404,"ip":"::1","ms":2}
