@@ -1,0 +1,2271 @@
+/* ============================================
+   IMPORTS
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ============================================
+   1. CSS VARIABLES
+   ============================================ */
+:root {
+  --primary:        #B42B6A;
+  --primary-hover:  #9A2259;
+  --primary-deep:   #7D1B47;
+  --primary-light:  #FDF2F7;
+  --primary-light2: #FCE8F3;
+  --success:        #16A34A;
+  --danger:         #DC2626;
+  --warning:        #F59E0B;
+  --text-dark:      #1B0A12;
+  --text-heading:   #2D1F26;
+  --text-body:      #6B5E63;
+  --text-muted:     #9B8F94;
+  --bg-off:         #FAF7F9;
+  --bg-card:        #FBF9FA;
+  --border:         #E8E2E5;
+  --border-strong:  #D4CDD0;
+  --radius:         14px;
+  --radius-sm:      8px;
+  --radius-pill:    50px;
+  --shadow-sm:      0 1px 4px rgba(27,10,18,0.07);
+  --shadow-md:      0 4px 20px rgba(27,10,18,0.09);
+  --shadow-lg:      0 8px 40px rgba(27,10,18,0.12);
+  --shadow-primary: 0 4px 18px rgba(180,43,106,0.28);
+  --transition:     all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ============================================
+   2. RESET & BASE
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Global safety net: no <select> anywhere in the app may ever exceed its
+   container's width — prevents any dropdown input from contributing to
+   page-level horizontal overflow on narrow viewports. */
+select { max-width: 100%; }
+
+/* Slim top-of-page route loading bar — replaces the old full-page
+   fade/scale/blur transition. Flashes briefly on navigation, current
+   page stays visible underneath, no blocking overlay. */
+.route-loading-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2.5px;
+  width: 0%;
+  background: linear-gradient(90deg, #C2185B, #E91E63);
+  z-index: 3000;
+  opacity: 0;
+  pointer-events: none;
+  transition: width 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.25s ease;
+}
+.route-loading-bar.active {
+  width: 82%;
+  opacity: 1;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: linear-gradient(160deg, #FAF5F8 0%, #FBF9FA 60%, #F9F5F7 100%);
+  background-attachment: fixed;
+  color: var(--text-body);
+  margin: 0; padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--text-heading);
+}
+
+.mono { font-family: 'JetBrains Mono', Consolas, monospace; }
+
+/* ============================================
+   3. LAYOUT
+   ============================================ */
+.app-layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+.main-content {
+  flex: 1;
+  padding: 0 20px 3rem;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================================
+   4. FLOATING PILL NAVBAR
+   ============================================ */
+
+/* Shimmer on the nav CTA button */
+.nav-cta-btn { position: relative; overflow: hidden; }
+.nav-cta-btn::after {
+  content: '';
+  position: absolute; top: -50%; left: -80%;
+  width: 50%; height: 200%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+  transform: skewX(-20deg);
+  animation: btnShimmer 2.8s ease-in-out infinite;
+}
+.nav-cta-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 22px rgba(180,43,106,0.45) !important;
+}
+
+@keyframes navShimmer {
+  0%   { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   5. SHINY BUTTONS
+   ============================================ */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 7px;
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg,#B42B6A 0%,#9A2259 60%,#B42B6A 100%) !important;
+  background-size: 200% 100% !important;
+  border: none !important; color: white !important;
+  padding: 10px 26px; border-radius: var(--radius-pill);
+  font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 4px 15px rgba(180,43,106,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+  letter-spacing: 0.2px;
+}
+.btn-primary::after {
+  content: ''; position: absolute; top: -50%; left: -75%;
+  width: 50%; height: 200%;
+  background: linear-gradient(to right,transparent,rgba(255,255,255,0.28),transparent);
+  transform: skewX(-20deg);
+  animation: btnShimmer 2.5s ease-in-out infinite;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(180,43,106,0.42), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 8px rgba(180,43,106,0.25); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: white !important; color: var(--text-heading) !important;
+  border: 1.5px solid var(--border-strong) !important;
+  padding: 10px 26px; border-radius: var(--radius-pill);
+  font-weight: 600; font-size: 0.9rem; cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 1px 4px rgba(27,10,18,0.06);
+}
+.btn-secondary:hover {
+  background: var(--primary-light) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(180,43,106,0.12);
+}
+.btn-secondary:active { transform: translateY(0); }
+
+/* Bootstrap btn-primary override */
+.btn.btn-primary, a.btn.btn-primary {
+  background: linear-gradient(135deg,#B42B6A 0%,#9A2259 60%,#B42B6A 100%) !important;
+  background-size: 200% 100% !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 15px rgba(180,43,106,0.28) !important;
+  border-radius: var(--radius-pill) !important;
+  font-weight: 700 !important; transition: all 0.25s !important;
+  position: relative; overflow: hidden;
+}
+.btn.btn-primary:hover, a.btn.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(180,43,106,0.4) !important;
+}
+.btn.btn-outline-secondary:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
+
+@keyframes btnShimmer {
+  0%   { left: -75%; }
+  60%  { left: 125%; }
+  100% { left: 125%; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-spinner {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.35); border-top-color: white;
+  border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+
+/* ============================================
+   6. FORM ACTIONS
+   ============================================ */
+.form-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 16px;
+  margin-top: 2rem; padding: 0;
+}
+
+/* ============================================
+   7. INPUTS, SELECTS, DROPDOWNS — pink-accented
+   ============================================ */
+.form-control, .form-select {
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  background-color: #FAFAFA !important;
+  color: var(--text-heading) !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  font-size: 0.95rem !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease !important;
+}
+.form-control:focus, .form-select:focus,
+.wizard-input:focus, .form-input-focus:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(180,43,106,0.11) !important;
+  background-color: white !important;
+  outline: none !important;
+}
+
+/* Custom pink select arrow */
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23B42B6A' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 14px !important;
+}
+
+/* bg-light inputs keep pink border on focus */
+.form-control.bg-light, .form-select.bg-light {
+  background-color: #F7F5F6 !important;
+}
+.form-control.bg-light:focus, .form-select.bg-light:focus {
+  background-color: white !important;
+}
+
+/* Placeholder color */
+.form-control::placeholder { color: #C0B5BA !important; }
+
+/* Step field label */
+.step-field-label, .form-label-small {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.7px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+
+/* ============================================
+   8. WIZARD STEP PROGRESS BAR — screenshot exact
+      [✓]────[2]────[○]   style
+   ============================================ */
+
+/* ── Wizard Step Progress Bar ──
+   Layout:  [ring-wrap + label] ── line ── [ring-wrap + label] ── ...
+   ring-wrap = 52×52 container; inner circle = 40×40; outer ring = 52×52 abs
+   Line margin-top = 25px  (= 26px ring-wrap centre − 1px half of 2px line)
+   ─────────────────────────────────────────────────────────────────────── */
+
+.wizard-steps-bar {
+  display: flex;
+  align-items: flex-start;   /* keep top-aligned so margin-top on line is predictable */
+  padding: 20px 12px 4px;
+}
+
+/* unit = [node] + optional [line]; flex:1 stretches line, last unit has no line so flex:0 */
+.wizard-step-unit {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* node = [ring-wrap] stacked above [label] */
+.wizard-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ring-wrap: fixed 52×52 box that holds the absolute outer ring + the inner circle */
+.step-ring-wrap {
+  width: 52px; height: 52px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Outer pale ring — absolutely fills the ring-wrap */
+.step-outer-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(180,43,106,0.13);
+  pointer-events: none;
+}
+.step-outer-ring--active {
+  animation: outerRingPulse 2s ease-in-out infinite;
+}
+@keyframes outerRingPulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%       { opacity: 0.5; transform: scale(1.14); }
+}
+
+/* Inner circle — three states, z-index above the ring */
+.step-inner-circle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 700; font-size: 15px;
+  position: relative; z-index: 1;
+  flex-shrink: 0;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+.step-inner-circle--done {
+  background: linear-gradient(135deg, #B42B6A 0%, #9A2259 100%);
+  color: white;
+  box-shadow: 0 3px 12px rgba(180,43,106,0.38);
+  animation: circleBounceIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.step-inner-circle--active {
+  background: linear-gradient(135deg, #B42B6A 0%, #9A2259 100%);
+  color: white;
+  box-shadow: 0 3px 16px rgba(180,43,106,0.45);
+}
+.step-inner-circle--pending {
+  background: white;
+  color: #C0B5BA;
+  border: 2px solid #DDD5D9;
+  box-shadow: 0 1px 4px rgba(27,10,18,0.06);
+}
+
+@keyframes circleBounceIn {
+  0%   { transform: scale(0.5); opacity: 0; }
+  65%  { transform: scale(1.18); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Step label (sits below the ring-wrap) */
+.wizard-step-label {
+  font-size: 11px; font-weight: 500;
+  color: var(--text-muted); letter-spacing: 0.2px;
+  white-space: nowrap; transition: color 0.3s ease;
+  text-align: center; line-height: 1.3;
+}
+.wizard-step-label--active { color: var(--primary); font-weight: 700; }
+.wizard-step-label--done   { color: var(--primary); font-weight: 600; }
+
+/* Connector line — margin-top = 26px (ring-wrap centre) − 1px = 25px */
+.wizard-step-line {
+  flex: 1;
+  height: 2px;
+  background: #E8DFE4;
+  border-radius: 2px;
+  position: relative;
+  margin: 25px 6px 0;   /* top=25 aligns with 40px circle centre inside 52px ring-wrap */
+  overflow: hidden;
+}
+.wizard-step-line-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: linear-gradient(90deg, #B42B6A 0%, #E05C96 100%);
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 0 6px rgba(180,43,106,0.35);
+}
+
+/* ============================================
+   9. LOGIN
+   ============================================ */
+.login-wrapper {
+  background: linear-gradient(145deg, #FDF2F7 0%, #FFFFFF 50%, #F5F0FF 100%);
+  background-attachment: fixed;
+}
+.login-card {
+  box-shadow: 0 24px 60px rgba(180,43,106,0.1), 0 4px 16px rgba(27,10,18,0.06) !important;
+  border: 1px solid rgba(232,226,229,0.6) !important;
+}
+
+/* ============================================
+   10. CARDS & SURFACES
+   ============================================ */
+.step-content {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  background: white !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.card-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.card-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-md) !important; }
+
+/* ============================================
+   11. UTILITY
+   ============================================ */
+.cursor-pointer  { cursor: pointer; }
+.hover-shadow-sm:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.hover-primary:hover   { background-color: var(--primary-light) !important; color: var(--primary) !important; }
+.hover-scale           { transition: transform 0.2s ease; }
+.hover-scale:hover     { transform: scale(1.05); }
+
+/* ============================================
+   12. FILE UPLOAD ZONE
+   ============================================ */
+.file-upload-zone {
+  border: 2px dashed var(--border-strong); border-radius: var(--radius);
+  padding: 3rem 2rem; text-align: center; cursor: pointer;
+  transition: var(--transition); background: var(--bg-card); position: relative;
+}
+.file-upload-zone:hover, .file-upload-zone.drag-over {
+  border-color: var(--primary); background: var(--primary-light);
+  transform: translateY(-2px); box-shadow: var(--shadow-md);
+}
+.file-upload-zone .upload-icon { font-size: 3rem; color: var(--primary); margin-bottom: 1rem; transition: var(--transition); }
+.file-upload-zone:hover .upload-icon { transform: scale(1.1) translateY(-4px); }
+.file-upload-zone .upload-text  { font-size: 1rem; color: var(--text-body); font-weight: 500; }
+.file-upload-zone .upload-hint  { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+.file-upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.file-preview-card {
+  background: white; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+  margin-top: 1rem; animation: popIn 0.25s ease-out forwards;
+}
+.file-preview-card .file-icon {
+  width: 48px; height: 48px; border-radius: var(--radius-sm);
+  background: var(--primary-light); display: flex; align-items: center;
+  justify-content: center; color: var(--primary); font-size: 1.5rem; flex-shrink: 0;
+}
+.file-preview-card .file-info  { flex: 1; min-width: 0; }
+.file-preview-card .file-name  { font-weight: 600; color: var(--text-heading); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-preview-card .file-size  { font-size: 0.75rem; color: var(--text-muted); }
+
+.upload-summary {
+  background: linear-gradient(135deg,#F0FFF4 0%,#FFFFFF 100%);
+  border: 1px solid #BBF7D0; border-radius: var(--radius);
+  padding: 1.5rem; animation: slideUp 0.3s ease-out forwards;
+}
+.upload-summary .summary-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700; color: var(--success); }
+.upload-summary .stat-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; font-size: 0.95rem; }
+.upload-summary .stat-value { font-weight: 700; color: var(--text-heading); }
+
+.elective-chip {
+  display: inline-flex; align-items: center; padding: 0.2rem 0.6rem;
+  border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+  background: var(--primary-light); color: var(--primary);
+  border: 1px solid rgba(180,43,106,0.15); margin: 0.15rem;
+}
+
+/* ============================================
+   13. ELECTIVE TABLES
+   ============================================ */
+.elective-table-wrapper {
+  overflow-x: auto; margin-bottom: 2rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: white;
+}
+.elective-table-wrapper .table-title {
+  padding: 1rem 1.25rem; font-size: 0.95rem; font-weight: 700; color: var(--text-heading);
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.elective-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.elective-table th {
+  background: var(--primary-light); color: var(--primary); font-weight: 700;
+  padding: 0.75rem 1rem; text-align: center; border: 1px solid var(--border);
+  white-space: nowrap; font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.8rem; letter-spacing: 0.3px;
+}
+.elective-table td { padding: 0.6rem 1rem; text-align: center; border: 1px solid var(--border); font-weight: 500; }
+.elective-table tbody tr:hover { background: var(--bg-card); }
+.elective-table .total-row { background: var(--primary-light); font-weight: 700; }
+.elective-table .total-row td { color: var(--primary); font-weight: 700; border-top: 2px solid var(--primary); }
+.elective-table .section-cell { font-weight: 700; color: var(--text-heading); text-align: left; font-family: 'JetBrains Mono', Consolas, monospace; }
+
+/* ============================================
+   14. SEATING CHART
+   ============================================ */
+.seating-chart-wrapper { margin-bottom: 2rem; }
+.seating-hall-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
+.seating-hall-header {
+  background: linear-gradient(135deg,var(--primary) 0%,var(--primary-hover) 100%);
+  color: white; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;
+}
+.seating-hall-header h4 { margin: 0; font-size: 1rem; font-weight: 700; color: white; }
+.seating-hall-header .hall-stats { font-size: 0.8rem; opacity: 0.9; }
+.seating-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 0.5rem; padding: 1.25rem; }
+.seat-cell {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0.5rem; text-align: center; transition: var(--transition);
+  min-height: 60px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.25rem;
+}
+.seat-cell:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.seat-cell .roll-no { font-size: 0.78rem; font-weight: 700; color: var(--text-heading); font-family: 'JetBrains Mono', Consolas, monospace; }
+.seat-cell .elective-code { font-size: 0.65rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 0.1rem 0.4rem; border-radius: 10px; }
+.seat-cell .seat-number { font-size: 0.6rem; color: var(--text-muted); }
+.seating-row-label { grid-column: 1/-1; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); padding: 0.25rem 0; letter-spacing: 0.5px; }
+
+/* ============================================
+   15. MODALS & DATE PICKER
+   ============================================ */
+.modal-overlay { backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-in-out; }
+.date-cell-hover:hover { background-color: var(--primary-light); color: var(--primary) !important; font-weight: bold; }
+
+/* ============================================
+   16. HISTORY
+   ============================================ */
+.history-row-hover:hover { background-color: var(--bg-card); }
+
+/* ============================================
+   17. PROFESSIONAL FOOTER
+   ============================================ */
+.app-footer {
+  background: linear-gradient(135deg, #FDFBFC 0%, #FFF9FB 100%);
+  border-top: 1px solid var(--border);
+  padding: 0;
+  animation: fadeIn 0.5s ease;
+}
+
+.footer-accent-line {
+  height: 3px;
+  background: linear-gradient(90deg, #9A2259 0%, #B42B6A 30%, #E05C96 60%, #B42B6A 80%, #9A2259 100%);
+  background-size: 200% 100%;
+  animation: navShimmer 4s linear infinite;
+}
+
+.footer-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.footer-brand-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 13px; font-weight: 700; color: var(--text-heading); line-height: 1.2;
+}
+.footer-brand-sub {
+  font-size: 10.5px; color: var(--text-muted); margin-top: 1px;
+}
+
+.footer-meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+.footer-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  color: var(--text-muted); background: white;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+.footer-pill:hover {
+  color: var(--primary); border-color: rgba(180,43,106,0.25);
+  background: var(--primary-light); transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(180,43,106,0.1);
+}
+
+.footer-copy {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  font-size: 11.5px; color: var(--text-muted);
+}
+.footer-version {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 600;
+  background: var(--primary-light); color: var(--primary);
+  padding: 2px 8px; border-radius: 10px;
+  border: 1px solid rgba(180,43,106,0.15);
+}
+
+/* ============================================
+   18. ANIMATIONS
+   ============================================ */
+@keyframes fadeIn      { from{opacity:0}      to{opacity:1} }
+@keyframes slideUp     { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideInRight{ from{opacity:0;transform:translateX(32px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideInLeft { from{opacity:0;transform:translateX(-32px)} to{opacity:1;transform:translateX(0)} }
+@keyframes popIn {
+  0%   { transform: scale(0.92); opacity: 0; }
+  70%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
+.step-forward  { animation: slideInRight 0.32s cubic-bezier(0.16,1,0.3,1) forwards; }
+.step-backward { animation: slideInLeft  0.32s cubic-bezier(0.16,1,0.3,1) forwards; }
+.popup-anim    { animation: popIn        0.3s  cubic-bezier(0.175,0.885,0.32,1.275) forwards; }
+.float-anim    { animation: floatUp      3s    ease-in-out infinite; }
+
+.processing-shimmer {
+  background: linear-gradient(90deg,var(--bg-card) 25%,var(--primary-light) 50%,var(--bg-card) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  border-radius: var(--radius); height: 120px;
+}
+
+/* ============================================
+   19. RESPONSIVE — Mobile First
+   ============================================ */
+
+/* ── Viewport wrapper (AllocationWizard outer container) ── */
+.viewport-wrapper { padding: 0 14px; }
+.compact-view { max-width: 860px; margin: 0 auto; }
+.wizard-container { padding: 8px 0 24px; }
+
+/* ── Step content area ── */
+.step-content-area { width: 100%; }
+
+/* Tablet ≤ 992px */
+@media (max-width: 992px) {
+  .main-content { padding: 0 18px 2rem; }
+  .compact-view { max-width: 100%; }
+}
+
+/* Mobile ≤ 768px */
+@media (max-width: 768px) {
+  /* Layout */
+  .main-content { padding: 0 14px 2rem; }
+  .viewport-wrapper { padding: 0 10px; }
+
+  /* Wizard progress bar — shrink circles */
+  .wizard-steps-bar  { padding: 12px 2px 4px; gap: 0; }
+  .step-ring-wrap    { width: 38px; height: 38px; }
+  .step-inner-circle { width: 30px; height: 30px; font-size: 12px; }
+  .step-inner-circle svg { width: 12px; height: 12px; }
+  .wizard-step-line  { margin-top: 18px; }
+  .wizard-step-label { font-size: 9px; }
+
+  /* Step content card padding */
+  .step-content { padding: 14px !important; }
+
+  /* Form actions */
+  .form-actions { padding: 0.75rem 0 0; margin-top: 1.25rem; }
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary { padding: 9px 18px; font-size: 0.85rem; }
+
+  /* File upload */
+  .file-upload-zone { padding: 1.5rem 1rem; }
+
+  /* Seating grid */
+  .seating-grid { grid-template-columns: repeat(3,1fr); gap: 0.3rem; padding: 0.6rem; }
+  .seat-cell    { padding: 0.3rem; min-height: 46px; }
+  .seat-cell .roll-no { font-size: 0.65rem; }
+
+  /* Footer */
+  .footer-body {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .footer-meta { justify-content: flex-start; }
+  .footer-copy { width: 100%; justify-content: space-between; }
+
+  /* History table hidden on mobile — cards take over */
+  .history-desktop { display: none !important; }
+}
+
+/* Clock time picker — stack Start/End Time vertically well before the
+   row layout actually runs out of room. The old ≤480px breakpoint left
+   a real overflow gap at 481-599px (confirmed via audit at 490/540px)
+   where the row is wide enough to need stacking but the rule hadn't
+   kicked in yet. */
+@media (max-width: 600px) {
+  .clock-pickers-row { flex-direction: column !important; gap: 12px !important; }
+  .clock-arrow-divider { display: none !important; }
+}
+
+/* Small mobile ≤ 480px */
+@media (max-width: 480px) {
+  /* Wizard progress — even smaller */
+  .step-ring-wrap    { width: 32px; height: 32px; }
+  .step-inner-circle { width: 26px; height: 26px; font-size: 11px; }
+  .wizard-step-line  { margin-top: 15px; height: 1.5px; }
+  .wizard-step-label { display: none !important; }
+
+  /* Exam name pill buttons full width */
+  .exam-pill-wrap { flex-direction: column !important; }
+  .exam-pill-wrap button { width: 100%; }
+
+  /* Section row — see consolidated rules at end of file */
+
+  /* Seating */
+  .seating-grid { grid-template-columns: repeat(2,1fr); }
+
+  /* Step content */
+  .step-content { padding: 10px !important; }
+  .step-content .row { --bs-gutter-x: 0.75rem; --bs-gutter-y: 0.75rem; }
+}
+
+/* ── Navbar pill: no overflow on small screens ── */
+@media (max-width: 400px) {
+  .navbar-logo-text { display: none !important; }
+}
+
+/* ── Print preview pages: horizontally scrollable on small screens ── */
+.print-page-outer {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+/* ── Print toolbar inner container ── */
+@media (max-width: 860px) {
+  .print-toolbar-inner {
+    max-width: 100% !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .print-editor-toolbar {
+    max-width: 100% !important;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Print toolbar outer padding */
+  .print-toolbar-outer { padding: 8px 12px !important; }
+
+  /* Center exam info: move below left/right buttons */
+  .print-toolbar-center {
+    order: 3;
+    flex: 0 0 100%;
+    text-align: left !important;
+    border-top: 1px solid #E8E2E5;
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+  .print-toolbar-center-sub { display: none; }
+
+  /* Right button group: allow wrapping */
+  .print-toolbar-right { flex-wrap: wrap; gap: 6px !important; }
+
+  /* Page headers (Attendance, History) */
+  .page-header-wrap.page-header-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* Login card */
+  .login-card-inner { padding: 24px 18px !important; }
+
+  /* OTP input boxes */
+  .otp-row { gap: 7px !important; }
+  .otp-box {
+    width: 38px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Scrollable edit modal on small phones */
+  .modal-card-scrollable {
+    max-height: 92vh;
+    overflow-y: auto !important;
+  }
+
+  /* Home cards: stack on phones */
+  .home-feature-cards { flex-direction: column; gap: 16px !important; }
+  .home-feature-cards > div { max-width: 100% !important; }
+}
+
+@media (max-width: 380px) {
+  .otp-box {
+    width: 33px !important;
+    height: 42px !important;
+    font-size: 17px !important;
+  }
+  .otp-row { gap: 5px !important; }
+  .login-card-inner { padding: 20px 14px !important; }
+  .print-toolbar-outer { padding: 6px 8px !important; }
+}
+
+/* ============================================
+   20. HISTORY TABS
+   ============================================ */
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  background: #F5F0F3;
+  border-radius: 50px;
+  padding: 5px;
+  width: fit-content;
+}
+
+.history-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9B8F94;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+  white-space: nowrap;
+}
+
+.history-tab-btn.active {
+  background: linear-gradient(135deg, #B42B6A 0%, #9A2259 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(180, 43, 106, 0.32);
+}
+
+.history-tab-btn:hover:not(.active) {
+  background: rgba(180, 43, 106, 0.08);
+  color: #B42B6A;
+}
+
+/* ============================================
+   21. ACTION ICON BUTTONS
+   ============================================ */
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+  text-decoration: none;
+  font-size: 0;
+}
+
+.action-icon-btn.aib-edit {
+  background: #FDF2F7;
+  border-color: rgba(180, 43, 106, 0.2);
+  color: #B42B6A;
+}
+.action-icon-btn.aib-edit:hover {
+  background: #B42B6A;
+  border-color: #B42B6A;
+  color: white;
+  box-shadow: 0 4px 12px rgba(180, 43, 106, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-view {
+  background: #EFF6FF;
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #3B82F6;
+}
+.action-icon-btn.aib-view:hover {
+  background: #3B82F6;
+  border-color: #3B82F6;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-print {
+  background: #F0FDF4;
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #22C55E;
+}
+.action-icon-btn.aib-print:hover {
+  background: #22C55E;
+  border-color: #22C55E;
+  color: white;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-attend {
+  background: #FFF7ED;
+  border-color: rgba(249, 115, 22, 0.2);
+  color: #F97316;
+}
+.action-icon-btn.aib-attend:hover {
+  background: #F97316;
+  border-color: #F97316;
+  color: white;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+  transform: translateY(-1px);
+}
+
+.action-icon-btn.aib-delete {
+  background: #FEF2F2;
+  border-color: rgba(220, 38, 38, 0.2);
+  color: #DC2626;
+}
+.action-icon-btn.aib-delete:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Mobile action buttons */
+.action-mobile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 50px;
+  border: 1.5px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.action-mobile-btn.aib-edit { background: #FDF2F7; border-color: rgba(180,43,106,0.2); color: #B42B6A; }
+.action-mobile-btn.aib-view { background: #EFF6FF; border-color: rgba(59,130,246,0.2); color: #3B82F6; }
+.action-mobile-btn.aib-print { background: #F0FDF4; border-color: rgba(34,197,94,0.2); color: #22C55E; }
+.action-mobile-btn.aib-attend { background: #FFF7ED; border-color: rgba(249,115,22,0.2); color: #F97316; }
+.action-mobile-btn.aib-delete { background: #FEF2F2; border-color: rgba(220,38,38,0.2); color: #DC2626; padding: 7px 12px; }
+.action-mobile-btn.aib-seat   { background: #F5F3FF; border-color: rgba(124,58,237,0.2); color: #7C3AED; }
+
+.action-icon-btn.aib-seat {
+  background: #F5F3FF;
+  border-color: rgba(124, 58, 237, 0.2);
+  color: #7C3AED;
+}
+.action-icon-btn.aib-seat:hover {
+  background: #7C3AED;
+  border-color: #7C3AED;
+  color: white;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   22. ANIMATIONS
+   ============================================ */
+
+@keyframes tabSlideIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes staggerFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content-enter {
+  animation: tabSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: staggerFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.stagger-item:nth-child(1)  { animation-delay: 30ms; }
+.stagger-item:nth-child(2)  { animation-delay: 80ms; }
+.stagger-item:nth-child(3)  { animation-delay: 130ms; }
+.stagger-item:nth-child(4)  { animation-delay: 180ms; }
+.stagger-item:nth-child(5)  { animation-delay: 230ms; }
+.stagger-item:nth-child(6)  { animation-delay: 280ms; }
+.stagger-item:nth-child(7)  { animation-delay: 330ms; }
+.stagger-item:nth-child(8)  { animation-delay: 380ms; }
+.stagger-item:nth-child(9)  { animation-delay: 430ms; }
+.stagger-item:nth-child(10) { animation-delay: 480ms; }
+
+/* Smooth hover lift for cards */
+.bg-white.rounded-4 {
+  transition: box-shadow 0.22s ease, transform 0.22s ease;
+}
+.bg-white.rounded-4:hover {
+  box-shadow: 0 8px 32px rgba(27, 10, 18, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+/* Shimmer pulse on primary buttons */
+@keyframes btnShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-primary {
+  background-size: 200% auto;
+  transition: background-position 0.5s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(180, 43, 106, 0.35) !important;
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .elective-table-wrapper { border: 1px solid #000; break-inside: avoid; }
+  .elective-table th { background: #f5f5f5 !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .elective-table .total-row { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .elective-table .total-row td { color: #000 !important; border-top: 2px solid #000; }
+  .seating-hall-header { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .seat-cell .elective-code { background: #eee !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .seating-hall-card { break-inside: avoid; }
+}
+
+/* ============================================
+   23. HOME PAGE
+   ============================================ */
+.home-page-wrap {
+  padding: 16px 4px 48px;
+}
+
+.home-header {
+  margin-bottom: 32px;
+}
+
+.home-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(20px, 5vw, 28px);
+  color: #1B0A12;
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+
+.home-subtitle {
+  color: #9B8F94;
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.home-stat-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 50px;
+  background: white;
+  border: 1.5px solid #E8E2E5;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6B5E63;
+}
+
+/* ── Cards grid: 3-col → 2-col → 1-col ── */
+.home-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.home-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 4px 20px rgba(27,10,18,0.05), inset 0 1px 0 rgba(255,255,255,0.5);
+  padding: 22px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: box-shadow 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
+  min-width: 0;
+}
+
+.home-card-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  font-size: 17px;
+  color: #1B0A12;
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+
+.home-card-desc {
+  color: #6B5E63;
+  font-size: 13.5px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.home-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.home-card-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: auto;
+  width: 100%;
+  white-space: nowrap;
+}
+
+/* ── Bottom utility panel (replaces Quick Access pill row) — left-aligned,
+   fit-content width so it hugs the nav items instead of stretching and
+   centering across the whole content area. Its left edge lines up with
+   the content cards above it because neither has its own extra margin. */
+.home-utility-panel {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
+  gap: 32px;
+  margin-top: 28px;
+  padding: 7px 28px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(27,10,18,0.05);
+}
+/* Subtle divider separating the page content above from the nav below —
+   sits in the margin-top gap, matching the panel's own (now compact) width. */
+.home-utility-panel::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(236,236,236,0.7);
+}
+
+.home-utility-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #6B5E63;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.home-utility-item:hover {
+  background: rgba(180,43,106,0.07);
+  color: #B42B6A;
+}
+
+/* Tablet: 2 columns (includes iPad Mini/Air/Pro portrait, up to 1100px so
+   iPad Pro's 1024px width gets the tablet treatment instead of the
+   desktop 3-col grid) */
+@media (max-width: 1100px) {
+  .home-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+}
+
+/* Tablet-only premium polish (601px–1100px) — desktop (>1100px) untouched */
+@media (min-width: 601px) and (max-width: 1100px) {
+  .home-page-wrap { padding: 20px 0 44px; }
+  .home-welcome { margin-bottom: 28px; }
+  .home-card {
+    border-radius: 24px !important;
+    padding: 22px 20px 18px !important;
+    gap: 14px !important;
+    background: rgba(255,255,255,0.78) !important;
+    backdrop-filter: blur(18px) saturate(1.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 10px 28px rgba(27,10,18,0.08) !important;
+  }
+  .home-card-icon {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 15px !important;
+    margin-bottom: 4px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 10px rgba(27,10,18,0.1);
+  }
+  .home-card-title { font-size: 16.5px !important; }
+  .home-card-desc { font-size: 13px !important; line-height: 1.6 !important; }
+  .home-chip {
+    padding: 5px 12px !important;
+    font-size: 11px !important;
+  }
+  .home-card-btn {
+    height: 48px;
+    padding: 0 20px !important;
+    border-radius: 24px !important;
+    font-size: 13.5px !important;
+  }
+
+  [data-module="allocate"] .home-card-icon       { background: linear-gradient(135deg,#C2185B,#F48FB1) !important; }
+  [data-module="attendance"] .home-card-icon     { background: linear-gradient(135deg,#AD1457,#EC407A) !important; }
+  [data-module="hall-designer"] .home-card-icon  { background: linear-gradient(135deg,#1D4ED8,#60A5FA) !important; }
+  [data-module="seating"] .home-card-icon        { background: linear-gradient(135deg,#D97706,#FBBF24) !important; }
+  [data-module="history"] .home-card-icon        { background: linear-gradient(135deg,#7C3AED,#4F46E5) !important; }
+  .home-card-icon svg { color: white !important; }
+
+  .home-utility-panel {
+    margin-top: 24px;
+    padding: 7px 24px;
+    border-radius: 20px;
+    gap: 24px;
+  }
+  .home-utility-panel::before { top: -12px; }
+  .home-utility-item {
+    padding: 8px 8px;
+    font-size: 13px;
+    border-radius: 13px;
+  }
+}
+
+/* Mobile: 1 column, premium glassmorphism cards, compact spacing/touch targets */
+@media (max-width: 600px) {
+  .home-cards-grid { grid-template-columns: 1fr; gap: 12px; justify-items: center; }
+
+  .home-card {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 26px !important;
+    padding: 18px 16px 14px !important;
+    gap: 11px !important;
+    background: rgba(255,255,255,0.72) !important;
+    backdrop-filter: blur(18px) saturate(1.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 10px 26px rgba(27,10,18,0.08),
+      0 2px 8px rgba(27,10,18,0.04) !important;
+  }
+  .home-card-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 13px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 10px rgba(27,10,18,0.1);
+  }
+  .home-card-title { font-size: 15.5px !important; line-height: 1.35 !important; margin-bottom: 3px !important; letter-spacing: -0.1px; }
+  .home-card-desc { font-size: 12.5px !important; line-height: 1.55 !important; }
+  .home-chip {
+    padding: 4px 11px !important;
+    font-size: 10.5px !important;
+    line-height: 1.4 !important;
+  }
+  .home-card-btn {
+    height: 46px;
+    min-height: 46px;
+    padding: 0 18px !important;
+    border-radius: 23px !important;
+    font-size: 13px !important;
+  }
+  .home-card-btn:active { transform: scale(0.97); }
+
+  /* Premium per-module gradient icon backgrounds (mobile/tablet only —
+     desktop keeps its flat tint background, set inline per-card in JSX) */
+  [data-module="allocate"] .home-card-icon       { background: linear-gradient(135deg,#C2185B,#F48FB1) !important; }
+  [data-module="attendance"] .home-card-icon     { background: linear-gradient(135deg,#AD1457,#EC407A) !important; }
+  [data-module="hall-designer"] .home-card-icon  { background: linear-gradient(135deg,#1D4ED8,#60A5FA) !important; }
+  [data-module="seating"] .home-card-icon        { background: linear-gradient(135deg,#D97706,#FBBF24) !important; }
+  [data-module="history"] .home-card-icon        { background: linear-gradient(135deg,#7C3AED,#4F46E5) !important; }
+  .home-card-icon svg { color: white !important; }
+
+  .home-utility-panel {
+    width: 100%;
+    gap: 5px;
+    justify-content: center;
+    padding: 7px;
+    border-radius: 18px;
+    margin-top: 18px;
+    padding-bottom: max(7px, env(safe-area-inset-bottom));
+  }
+  .home-utility-panel::before { top: -10px; }
+  .home-utility-item {
+    justify-content: center;
+    font-size: 12px;
+    padding: 8px 14px;
+    min-height: 44px;
+    border-radius: 12px;
+  }
+  .home-utility-item:active { transform: scale(0.95); background: rgba(180,43,106,0.1); }
+
+  /* Touch feedback on cards (touch devices only, desktop hover stays as-is) */
+  @media (hover: none) {
+    .home-card:active { transform: scale(0.98); box-shadow: 0 4px 14px rgba(180,43,106,0.14) !important; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  }
+}
+
+/* ── Ultra-compact mobile launcher: title-only, entire card is the button.
+   Tablet/desktop keep the full glass cards above (.home-cards-grid) —
+   this only takes over at ≤600px. ── */
+.home-mobile-launcher { display: none; }
+
+@media (max-width: 600px) {
+  .home-cards-grid { display: none !important; }
+
+  .home-mobile-launcher {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 91%;
+    margin: 0 auto;
+  }
+
+  .home-launcher-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 64px;
+    border-radius: 22px;
+    border-width: 2px;
+    border-style: solid;
+    /* Flat — no pink glow/shadow behind the button, just the border. */
+    box-shadow: none;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 800;
+    font-size: 16.5px;
+    letter-spacing: 0.15px;
+    line-height: 1.2;
+    cursor: pointer;
+    padding: 0 18px;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+  }
+  .home-launcher-card:hover {
+    background-color: #FCE4EC !important;
+  }
+  .home-launcher-card:active {
+    background-color: #FCE4EC !important;
+    filter: brightness(0.96) saturate(1.05);
+    transform: scale(0.97);
+  }
+}
+
+/* Bottom quick-nav stays in normal document flow on mobile (not a fixed
+   floating bar) — this avoids it ever overlapping the last launcher
+   button, and keeps the page as a single natural scroll. */
+
+@media (max-width: 340px) {
+  .home-launcher-card { height: 48px; font-size: 15px; border-radius: 18px; }
+  .home-mobile-launcher { gap: 7px; }
+  .home-welcome-title { font-size: 20px !important; }
+}
+
+/* ── Compact enterprise footer: brand (left) / copyright (center) /
+   links (right) on one horizontal line on desktop & tablet; stacks
+   centered on mobile where three columns can't fit. ── */
+.home-footer-outer {
+  border-top: 1px solid rgba(27,10,18,0.06);
+  background: rgba(180,43,106,0.02);
+}
+.home-footer-compact {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 20px;
+  padding: 10px 28px;
+  width: 100%;
+}
+.home-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.home-footer-brand-logo {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.home-footer-brand-text { min-width: 0; text-align: left; }
+.home-footer-brand-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  color: #1B0A12;
+  line-height: 1.25;
+}
+.home-footer-brand-sub {
+  font-size: 10px;
+  color: #9B8F94;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Department line only — subtle dark pink matching the brand primary,
+   same size/weight/alignment as the college line above it. */
+.home-footer-brand-sub-dept {
+  color: #C2185B;
+}
+.home-footer-copy {
+  text-align: center;
+  font-size: 11.5px;
+  color: #9B8F94;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.home-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+.home-footer-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6B5E63;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.18s ease;
+}
+.home-footer-link:hover { color: #B42B6A; }
+
+/* Tablet: brand + links share the top row, copyright drops to its own
+   centered row underneath rather than clipping. */
+@media (max-width: 900px) {
+  .home-footer-compact {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "brand links" "copy copy";
+    row-gap: 8px;
+  }
+  .home-footer-brand { grid-area: brand; }
+  .home-footer-links { grid-area: links; }
+  .home-footer-copy { grid-area: copy; text-align: center; }
+}
+
+/* Mobile: centered stacked layout — Logo → App Name → Department →
+   Copyright → Links, each on its own row with comfortable spacing. */
+@media (max-width: 600px) {
+  .home-footer-compact {
+    grid-template-columns: 1fr;
+    grid-template-areas: "brand" "copy" "links";
+    justify-items: center;
+    text-align: center;
+    padding: 20px 16px 22px;
+    row-gap: 12px;
+  }
+  .home-footer-brand { grid-area: brand; flex-direction: column; text-align: center; gap: 8px; }
+  .home-footer-brand-text { text-align: center; }
+  .home-footer-brand-logo { height: 30px; }
+  .home-footer-brand-title { font-size: 13px; }
+  .home-footer-brand-sub { white-space: normal; font-size: 9.5px; }
+  .home-footer-copy { grid-area: copy; text-align: center; white-space: normal; font-size: 10px; }
+  /* Three pill buttons, sized for a comfortable touch target */
+  .home-footer-links { grid-area: links; justify-content: center; flex-wrap: wrap; gap: 8px; }
+  .home-footer-link {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 44px; box-sizing: border-box;
+    font-size: 11px;
+    padding: 0 16px;
+    border-radius: 50px;
+    background: rgba(180,43,106,0.06);
+    border: 1px solid rgba(180,43,106,0.12);
+  }
+  .home-footer-link:hover { background: rgba(180,43,106,0.12); }
+}
+
+/* ============================================
+   24. HALL MANAGER RESPONSIVE FIXES
+   ============================================ */
+@media (max-width: 600px) {
+  /* Ensure hall manager cards grid is single-column on phones */
+  .hall-manager-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ============================================
+   25. GENERAL BUTTON & FORM RESPONSIVE FIXES
+   ============================================ */
+
+/* Prevent button text overflow */
+button { min-width: 0; }
+
+/* Action buttons in toolbars should wrap rather than overflow */
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Fix form-actions on very small screens */
+@media (max-width: 420px) {
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .form-actions .btn-primary,
+  .form-actions .btn-secondary {
+    width: 100%;
+    margin-left: 0 !important;
+    justify-content: center;
+  }
+}
+
+/* Tear/cut line used in print sheets */
+.tear-line {
+  border: none;
+  border-top: 2px dashed #999;
+  margin: 20px 0 16px;
+  position: relative;
+}
+.tear-line::before {
+  content: '✂ Cut Here';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+@media print {
+  .tear-line {
+    border-top: 2px dashed #333;
+  }
+  .tear-line::before {
+    color: #333;
+  }
+}
+
+/* ============================================
+   PAGE ANIMATIONS & FULL-VIEWPORT HELPERS
+   ============================================ */
+
+/* Page entrance animation — split into two separate animations sharing
+   one element, rather than a single animation with fill-mode:both.
+   Why: .page-enter is applied to .main-content on every routed page, and
+   ANY element with a computed `transform` other than the literal keyword
+   `none` becomes a containing block for position:fixed descendants. A
+   single `both`-filled animation that ends on `transform: translateY(0)`
+   computes to an explicit identity matrix (not `none`) once held past
+   100% — which silently turned every position:fixed modal nested inside
+   the page (Delete Allocation, Change Password, etc.) into something
+   centered on .main-content's own (possibly very tall, scrolled-past)
+   box instead of the actual viewport. Splitting the transform into its
+   own animation with the default fill-mode (i.e. NOT forwards/both)
+   means transform genuinely reverts to the cascade's `none` the instant
+   the 0.35s finishes, while the opacity animation still keeps opacity:1
+   afterwards as before. Zero visual difference (the element was already
+   at translateY(0) at that instant) — this only changes what the
+   computed style resolves to once the animation is done. */
+@keyframes pageEnterOpacity { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pageEnterSlide   { from { transform: translateY(14px); } to { transform: translateY(0); } }
+.page-enter {
+  animation:
+    pageEnterOpacity 0.35s cubic-bezier(0.22,1,0.36,1) forwards,
+    pageEnterSlide   0.35s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* Staggered card entrance — split into opacity (forwards) + transform
+   (default fill-mode) for the same reason as .page-enter above: a
+   `both`-filled animation ending on transform:translateY(0) computes to
+   an explicit identity matrix (not `none`) forever, which would make
+   any future position:fixed content nested inside a card a silent
+   containing-block trap. No live bug depends on this today, but this
+   keeps the pattern consistent and safe by construction. */
+/* Kept (unsplit) — still used directly via inline style in
+   SeatingChart.jsx's empty-state seat cards; low-risk leaf usage. */
+@keyframes cardSlideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cardSlideUpOpacity { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cardSlideUpMove    { from { transform: translateY(18px); } to { transform: translateY(0); } }
+.card-enter      {
+  animation:
+    cardSlideUpOpacity 0.3s cubic-bezier(0.22,1,0.36,1) forwards,
+    cardSlideUpMove    0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.card-enter-d1   { animation-delay: 0.05s; }
+.card-enter-d2   { animation-delay: 0.10s; }
+.card-enter-d3   { animation-delay: 0.15s; }
+.card-enter-d4   { animation-delay: 0.20s; }
+.card-enter-d5   { animation-delay: 0.25s; }
+
+/* Interactive card hover */
+.card-interactive {
+  transition: transform 0.18s cubic-bezier(0.4,0,0.2,1),
+              box-shadow 0.18s cubic-bezier(0.4,0,0.2,1),
+              border-color 0.18s ease;
+  cursor: pointer;
+}
+.card-interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(27,10,18,0.1) !important;
+}
+
+/* Print-only: hidden on screen, shown when printing */
+.print-only { display: none !important; }
+@media print {
+  .print-only { display: block !important; }
+  .no-print   { display: none !important; }
+}
+
+/* Full-viewport page (no max-width, fills flex parent) */
+.full-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Hall Designer only: let the page have ONE natural document scroll
+   instead of an internally clipped/scrolled shell. Scoped to this page
+   specifically so SeatingAllotment (which also uses .full-content) is
+   untouched. */
+.full-content.hall-designer-shell {
+  overflow: visible;
+}
+
+/* Thin, subtle scrollbar for the horizontally-scrolling grid canvas */
+.hall-canvas-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.hall-canvas-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hall-canvas-scroll::-webkit-scrollbar-thumb {
+  background: rgba(27,10,18,0.15);
+  border-radius: 999px;
+}
+.hall-canvas-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(27,10,18,0.28);
+}
+
+/* Pill tab buttons */
+.pill-tab {
+  padding: 5px 16px;
+  border-radius: 50px;
+  border: 1.5px solid #E8E2E5;
+  background: white;
+  font-weight: 700;
+  font-size: 12px;
+  color: #6B5E63;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pill-tab:hover { background: #FDF2F7; border-color: rgba(180,43,106,0.3); color: #B42B6A; }
+.pill-tab.active { background: #FDF2F7; border-color: rgba(180,43,106,0.4); color: #B42B6A; }
+
+/* Pulse animation for success icon */
+@keyframes successPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(180,43,106,0.4); }
+  70%  { box-shadow: 0 0 0 16px rgba(180,43,106,0); }
+  100% { box-shadow: 0 0 0 0 rgba(180,43,106,0); }
+}
+.success-icon-pulse { animation: successPulse 1.4s ease-out both; }
+
+/* Shimmer loading skeleton */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #F0EDF0 25%, #FAF7F9 50%, #F0EDF0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ============================================
+   26. MOBILE RESPONSIVENESS CUSTOM OVERRIDES
+   ============================================ */
+
+/* Horizontally scrollable tab container for history & seating allotment */
+.history-tabs-mobile-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  padding-bottom: 6px;
+  scrollbar-width: none; /* Firefox */
+}
+.history-tabs-mobile-wrap::-webkit-scrollbar {
+  display: none; /* Safari / Chrome */
+}
+.history-tabs-mobile-wrap .history-tabs {
+  display: inline-flex;
+}
+
+/* Responsive grid for actions in cards on mobile */
+@media (max-width: 600px) {
+  .action-mobile-btn {
+    flex: 1 1 calc(50% - 8px) !important;
+    justify-content: center;
+  }
+}
+
+/* Designer Sidebar Mobile Slide-over Drawer */
+@media (max-width: 768px) {
+  .designer-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 280px !important;
+    height: 100vh !important;
+    z-index: 1050 !important;
+    background: white !important;
+    box-shadow: 4px 0 24px rgba(27,10,18,0.2) !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  .designer-sidebar.show-mobile-sidebar {
+    transform: translateX(0) !important;
+  }
+  .designer-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    background: rgba(27,10,18,0.45);
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease;
+  }
+}
+
+/* ============================================
+   27. FONT CONSISTENCY — apply DM Sans throughout
+   ============================================ */
+button, input, select, textarea {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* All headings use Playfair Display unless overridden */
+h2, h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Labels and uppercase small text */
+label {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ============================================
+   28. HOME PAGE — HERO SECTION
+   ============================================ */
+.home-page-wrap {
+  /* Horizontal alignment is handled entirely by the parent .main-content
+     (max-width:1100px, centered, 20px padding — matching the navbar
+     pill exactly) so the hero text's left edge lines up with the
+     navbar logo's left edge. This wrapper only adds vertical spacing. */
+  padding: 0 0 48px;
+  position: relative;
+  /* No background of its own — blends fully with the page behind it.
+     The old radial-gradient wash here rendered as a visible pink-tinted
+     rounded box behind the whole card grid, which is exactly what we
+     don't want: cards should sit directly on the plain page background. */
+}
+.home-page-wrap > * { position: relative; z-index: 1; }
+
+/* ── Welcome section — plain typography, no card/border/shadow ── */
+.home-welcome {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.home-welcome-title {
+  position: relative;
+  z-index: 1;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: clamp(24px, 3.2vw, 38px);
+  letter-spacing: -0.01em;
+  color: #000000;
+  margin: 0 0 6px;
+  line-height: 1.1;
+  /* Reserve one line's height so the typing animation doesn't reflow
+     the subtitle/buttons beneath it as the text grows and shrinks. */
+  min-height: 1.1em;
+}
+
+/* Blinking caret that follows the current typing/deleting position */
+.home-hero-caret {
+  display: inline-block;
+  width: 3px;
+  margin-left: 3px;
+  height: 0.8em;
+  vertical-align: -0.1em;
+  background: #C2185B;
+  animation: heroCaretBlink 0.9s steps(1) infinite;
+}
+@keyframes heroCaretBlink {
+  0%, 49%  { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.home-welcome-subtitle {
+  position: relative;
+  z-index: 1;
+  font-family: 'Inter', 'Geist', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.1px;
+  color: #6B5E63;
+  margin: 0;
+}
+
+/* Soft ambient pink bloom seated behind only the "Hallocate" word (not
+   the whole heading) — single soft blurred circle, ~240px, 8% opacity,
+   no hard edge. Reads as ambient lighting, not a background shape. */
+.home-hero-glow {
+  position: absolute;
+  top: -60px; left: 190px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(194,24,91,0.08) 0%, transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-hero-gradient-text {
+  background: linear-gradient(90deg, #E91E63 0%, #D81B60 20%, #8E24AA 45%, #3949AB 70%, #00ACC1 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: heroGradientShift 6s ease-in-out infinite;
+}
+@keyframes heroGradientShift {
+  0%, 100% { background-position: 0% center; }
+  50%      { background-position: 100% center; }
+}
+
+@media (max-width: 600px) {
+  .home-hero-glow { top: -30px; left: 90px; width: 200px; height: 200px; filter: blur(26px); }
+}
+
+@media (max-width: 600px) {
+  /* Horizontal inset now comes solely from .main-content (matching the
+     navbar exactly) — this wrapper only controls vertical spacing.
+     Kept tight so all 5 launcher buttons clear the fold on the
+     smallest supported phones. */
+  .home-page-wrap { padding: 14px 0 28px; }
+  /* Nudge the hero text slightly further right than the rest of the
+     page content (~2% of viewport width) for a touch more breathing
+     room from the left edge. */
+  .home-welcome { margin-bottom: 16px; padding-left: 8px; }
+  .home-welcome-title { font-size: 24px; }
+  .home-welcome-subtitle { font-size: 12px; margin-top: 4px; }
+}
+
+/* Keep home-header from old code intact if present */
+.home-header {
+  margin-bottom: 28px;
+}
+
+/* ══════════════════════════════════════════
+   Allocation History — mobile floating cards
+   (tablet/mobile only, ≤991px; desktop table
+   is untouched above that breakpoint)
+═══════════════════════════════════════════ */
+@media (max-width: 991px) {
+  .history-header-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  /* The horizontally-scrollable tabs wrapper sits at the page root's
+     own padding, which gets zeroed by the global [class*="page-"]
+     mobile reset (≤768px) — give it the same explicit inset as the
+     heading/cards so all four line up on one content grid. */
+  .history-tabs-mobile-wrap {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  .history-cards-mobile {
+    align-items: center;
+    gap: 18px !important;
+  }
+  .history-card-mobile {
+    width: 91% !important;
+    background: rgba(255,255,255,0.6) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    box-shadow: 0 10px 28px rgba(27,10,18,0.08), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+    padding: 20px !important;
+  }
+}
+
+/* ══════════════════════════════════════════
+   Attendance Generation — mobile floating cards
+═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .page-header-wrap.page-header-wrap {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  /* Info banner sits directly on the page root, whose own padding is
+     zeroed by the global [class*="page-"] mobile reset — give it the
+     same 18px inset as the heading/cards so it doesn't sit flush
+     against the screen edges. */
+  .attendance-info-banner {
+    margin-left: 18px !important;
+    margin-right: 18px !important;
+  }
+  .attendance-cards-mobile {
+    align-items: center;
+    gap: 18px !important;
+  }
+  .attendance-card-mobile {
+    width: 91% !important;
+    background: rgba(255,255,255,0.6) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    box-shadow: 0 10px 28px rgba(27,10,18,0.08), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+    padding: 20px !important;
+  }
+}
+
+/* ══════════════════════════════════════════
+   Attendance desktop table — tablet fix
+   Desktop (≥1024px) keeps rounded-corner clipping as before.
+   Tablet (768-1023px, where the table is active but width is
+   tight) trims padding so every column — including Action —
+   fits without clipping; overflow-x:auto is a safety net so a
+   button is never cut off even in an edge case, instead of
+   silently disappearing behind overflow:hidden.
+   ═══════════════════════════════════════════ */
+.attendance-table-wrap {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .attendance-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .attendance-table-wrap table { min-width: 720px; }
+  .attendance-table-wrap th,
+  .attendance-table-wrap td {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    font-size: 13px;
+  }
+  .attendance-table-wrap th:last-child,
+  .attendance-table-wrap td:last-child {
+    padding-right: 16px !important;
+    min-width: 130px;
+  }
+}
+
+/* ══════════════════════════════════════════
+   Legal pages (Privacy Policy / Terms / Contact)
+   — soft glass document panel, thin pink accent border, no icons.
+   Optimized for desktop, tablet and mobile.
+═══════════════════════════════════════════ */
+.legal-page {
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid rgba(194,24,91,0.15);
+  border-radius: 22px;
+}
+
+@media (max-width: 1024px) {
+  .legal-page {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    padding-top: 28px !important;
+  }
+  .legal-meta {
+    font-size: 10.5px !important;
+  }
+  .legal-plain-section {
+    padding-bottom: 18px !important;
+    margin-bottom: 18px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .legal-page {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+    border-radius: 16px;
+  }
+  .legal-plain-section {
+    padding-bottom: 16px !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   COMPREHENSIVE MOBILE OPTIMIZATIONS
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Global Mobile Base ── */
+@media (max-width: 768px) {
+  * { -webkit-tap-highlight-color: transparent; }
+
+  /* Remove hover transform on touch devices */
+  .home-card:hover { transform: none !important; }
+
+  /* Home page cards — full width stack */
+  .home-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 0 0 24px !important;
+  }
+  .home-card {
+    padding: 18px 16px !important;
+  }
+  /* Page content padding */
+  .page-enter, [class*="page-"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Allocation wizard */
+  .wizard-outer, .allocation-wizard-wrap {
+    padding: 8px !important;
+  }
+  .step-content {
+    border-radius: 12px !important;
+  }
+
+  /* History page */
+  .history-card {
+    padding: 14px 12px !important;
+  }
+  .history-exam-name {
+    font-size: 14px !important;
+  }
+
+  /* Seating chart stats strip */
+  .seating-stats-strip {
+    gap: 6px !important;
+  }
+
+  /* Hall tabs — horizontal scroll */
+  .hall-tabs-bar {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  /* Attendance page */
+  .attendance-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  /* Print toolbar */
+  .print-toolbar-inner {
+    padding: 8px 12px !important;
+  }
+
+  /* Footer stacking */
+  .footer-body {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 12px 16px !important;
+    align-items: flex-start !important;
+  }
+  .footer-meta {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+}
+
+/* ── Small mobile ≤ 480px ── */
+@media (max-width: 480px) {
+  /* Home welcome section */
+  .home-welcome-title { font-size: 16px !important; }
+
+  /* Cards */
+  .home-card { padding: 14px 12px !important; }
+  .home-cards-grid { gap: 10px !important; }
+
+  /* Wizard step nav labels — hide text, show only icons */
+  .wizard-step-label { font-size: 8px !important; }
+
+  /* Form inputs */
+  .form-control, .form-select {
+    font-size: 14px !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Buttons */
+  .btn { font-size: 13px !important; padding: 8px 14px !important; }
+
+  /* Section rows in wizard — see consolidated rules at end of file */
+
+  /* History cards */
+  .history-card-meta { flex-direction: column !important; gap: 4px !important; }
+
+  /* Attendance table */
+  .attendance-table th, .attendance-table td {
+    font-size: 11px !important;
+    padding: 4px 6px !important;
+  }
+
+  /* Back button + title bar */
+  .page-topbar {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+  .page-topbar h1, .page-topbar h2 {
+    font-size: 15px !important;
+  }
+}
+
+/* ── Seating Chart mobile specific ── */
+@media (max-width: 600px) {
+  /* Stats strip wraps into 2x2 grid */
+  .seating-stats-strip > div {
+    min-width: calc(50% - 4px) !important;
+    flex: 1 1 calc(50% - 4px) !important;
+  }
+
+  /* Legend text shrink */
+  .seating-legend-row {
+    font-size: 10px !important;
+  }
+
+  /* Top bar compact */
+  .seating-topbar {
+    padding: 8px 12px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+}
+
+/* ── Hall Layout Designer mobile ── */
+@media (max-width: 600px) {
+  .hall-designer-toolbar {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+  .hall-designer-toolbar button {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ── Login page mobile ── */
+@media (max-width: 480px) {
+  .login-card {
+    margin: 16px !important;
+    padding: 24px 20px !important;
+    border-radius: 16px !important;
+  }
+  .login-card h2 { font-size: 20px !important; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Section row (Sections step) — rebuilt as a self-contained,
+   fully-explicit flex layout so it never depends on Bootstrap
+   utility class cascade order. The "students" label and the
+   delete (×) button are always separate flex items with a real
+   gap between them; both the row and its controls wrap onto a
+   new line (never overlap) if space runs out.
+   ══════════════════════════════════════════════════════════ */
+.section-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #F8F5F7;
+  border: 1px solid #F0EDF0;
+  box-sizing: border-box;
+}
+.section-row-label {
+  font-weight: 700;
+  font-size: 15px;
+  color: #2D1F26;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  flex-shrink: 0;
+}
+.section-row-controls {
+  display: flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+}
+.section-input-box {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #E8E2E5;
+  box-shadow: 0 1px 3px rgba(27,10,18,0.05);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.section-students-label {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.section-delete-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .section-row-label { font-size: 13px; }
+  /* 44px minimum touch target on touch-sized screens */
+  .section-delete-btn {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
+@media (max-width: 400px) {
+  /* If even the controls group can't fit beside the label, stack the
+     whole row — label on its own line, controls below, still never
+     overlapping. */
+  .section-row { flex-direction: column; align-items: stretch; }
+  .section-row-controls { justify-content: space-between; width: 100%; }
+}
+
