@@ -74,19 +74,112 @@ const buildYearLabel = (year, sections) => {
   return `${year}– ${secs[0]} & ${secs.slice(1).join(' & ')}`;
 };
 
+/* ─── Roll Number column ───────────────────────────────────────────
+   The left-most column of the attendance sheet prints the Excel/hall-plan
+   ROLL NUMBER as-is — it is never a freshly generated 1..N serial:
+     - Roll numbers restart per section (Section A 1-5, Section B 1-5),
+       so the same roll number can legitimately appear twice in one hall.
+     - Duplicates are therefore allowed and printed as given.
+     - A roll number whose student details are missing keeps its own row;
+       following students are never pulled up to fill the gap.
+──────────────────────────────────────────────────────────────────── */
+
+/* Numeric value of a roll number, or null when it isn't a plain number
+   (gap detection only ever applies to numeric roll sequences). */
+const rollNum = (r) => {
+  const s = String(r ?? '').trim();
+  if (!s || !/^\d+$/.test(s)) return null;
+  return Number(s);
+};
+
+/* Safety valve: never materialise an unbounded run of placeholder rows
+   from a wildly non-contiguous roll sequence. */
+const MAX_ROLL_GAP_FILL = 50;
+
 /* ─── S.No computation ─────────────────────────────────────────────
-   Standard : Built from hallAllocations (hall plan).
-              If nameMap (Excel) is provided, register numbers & names
-              are filled in from it; otherwise rows are left blank for
-              students to fill during the exam.
+   Standard : Built from hallAllocations (hall plan). Each entry carries
+              the section's fromRoll..toRoll, so the printed roll numbers
+              come straight from the plan (restarting per section).
+              If Excel data is provided, register numbers & names are
+              filled in — matched by Roll No when the file has a Roll No
+              column, otherwise consumed in Excel row order. Rows without
+              a match are left blank for students to fill during the exam.
    Elective : Built from hallAllocations + studentData (sorted by
               section then rollNumber), NOT from seatingChart.
-              Each year's students are listed in hall-plan order.
+              Each year's students are listed in hall-plan order, and
+              roll numbers skipped by the Excel sheet keep their row.
 ──────────────────────────────────────────────────────────────────── */
-const buildHallStudentsStandard = (allocation, nameMap) => {
+const buildHallStudentsStandard = (allocation, nameMap, excelRows) => {
   const hallMap = {};
-  const allRegs = nameMap && nameMap.size > 0 ? [...nameMap.keys()] : [];
-  let offset = 0;
+
+  // Ordered Excel rows, when the optional upload supplied them. Falls back
+  // to nameMap's insertion order (register numbers only, no roll numbers)
+  // so older call sites and files without a Roll No column keep working.
+  const rows = (excelRows && excelRows.length > 0)
+    ? excelRows
+    : (nameMap && nameMap.size > 0
+        ? [...nameMap.keys()].map(reg => ({ rollNo: '', registerNo: reg, name: nameMap.get(reg) || '' }))
+        : []);
+
+  const rollAware = rows.some(r => String(r.rollNo || '').trim() !== '');
+
+  // Rows that carry real details, keyed by roll number — lets a blank row
+  // for roll 15 still print roll 15's student if the details for that roll
+  // number appear elsewhere in the sheet.
+  const detailsByRoll = new Map();
+  rows.forEach(r => {
+    const key = String(r.rollNo || '').trim();
+    if (!key || detailsByRoll.has(key)) return;
+    if (r.registerNo || r.name) detailsByRoll.set(key, r);
+  });
+
+  const consumed = new Set();      // row indices already printed
+  let ptr = 0;                     // next unconsumed row in Excel order
+
+  const advancePtr = () => { while (ptr < rows.length && consumed.has(ptr)) ptr++; };
+
+  /* Pick the row belonging to the expected roll number, without ever
+     shifting a later student up into an empty position. */
+  const takeRow = (expectedRoll) => {
+    advancePtr();
+    if (!rollAware) {
+      // No Roll No column — positional consumption (previous behaviour).
+      const row = rows[ptr];
+      if (!row) return null;
+      consumed.add(ptr); ptr++;
+      return row;
+    }
+
+    const want = rollNum(expectedRoll);
+    // Skip rows already left behind (roll numbers below what we expect).
+    while (ptr < rows.length) {
+      advancePtr();
+      const row = rows[ptr];
+      if (!row) break;
+      const key = String(row.rollNo || '').trim();
+      if (key === String(expectedRoll ?? '').trim()) {
+        consumed.add(ptr); ptr++;
+        return row;
+      }
+      const have = rollNum(key);
+      if (want === null || have === null) {
+        // Non-numeric roll numbers can't be compared — take positionally.
+        consumed.add(ptr); ptr++;
+        return row;
+      }
+      if (have > want) break;   // gap: this position has no row of its own
+      ptr++;                    // stale row for an earlier position
+    }
+
+    // Gap — recover the details from elsewhere in the sheet if present.
+    const elsewhere = detailsByRoll.get(String(expectedRoll ?? '').trim());
+    if (elsewhere) {
+      const idx = rows.indexOf(elsewhere);
+      if (idx >= 0 && !consumed.has(idx)) { consumed.add(idx); return elsewhere; }
+    }
+    return null;
+  };
+
   (allocation.hallAllocations || []).forEach(hall => {
     const students = [];
     let hallSNo = 1;
@@ -94,16 +187,21 @@ const buildHallStudentsStandard = (allocation, nameMap) => {
       const count = (entry.count !== undefined && entry.count > 0)
         ? entry.count
         : (entry.toRoll - entry.fromRoll + 1);
+      // fromRoll is the section's own roll number for the first seat of this
+      // entry (it restarts at 1 for every new section), so roll numbers are
+      // printed exactly as the plan/Excel has them rather than renumbered.
+      const fromRoll = rollNum(entry.fromRoll);
       for (let i = 0; i < count; i++) {
-        const reg = allRegs[offset + i] || '';
+        const roll = fromRoll !== null ? fromRoll + i : hallSNo + i;
+        const row = takeRow(roll);
         students.push({
-          registerNo: reg,
-          name: reg ? (nameMap.get(reg) || '') : '',
+          registerNo: row?.registerNo || '',
+          name: row?.name || '',
           section: entry.section,
-          sNo: hallSNo++,
+          sNo: roll,
         });
       }
-      offset += count;
+      hallSNo += count;
     });
     const secs = [...new Set((hall.entries || []).map(e => e.section))];
     hallMap[hall.hallName] = { students, yearLabel: buildYearLabel(allocation.year, secs) };
@@ -122,8 +220,20 @@ const buildHallStudentsElective = (allocation) => {
   // value. If the Excel had a separate "Roll No" column (distinct from
   // Register Number), sort numerically by that; otherwise preserve
   // original Excel row order (stable sort — comparator never runs).
+  const allStudents = allocation.studentData || [];
+
+  // Roll Number → student, for students whose details ARE filled in. Used to
+  // recover a name/register number for a roll number that is missing from
+  // its own section run but present elsewhere in the Excel data.
+  const detailsByRoll = new Map();
+  allStudents.forEach(s => {
+    const key = String(s.rollNo || '').trim();
+    if (!key || detailsByRoll.has(key)) return;
+    if (s.rollNumber || s.studentName) detailsByRoll.set(key, s);
+  });
+
   const sectionStudents = {};
-  (allocation.studentData || []).forEach(s => {
+  allStudents.forEach(s => {
     const sec = s.section || '';
     if (!sectionStudents[sec]) sectionStudents[sec] = [];
     sectionStudents[sec].push(s);
@@ -137,6 +247,24 @@ const buildHallStudentsElective = (allocation) => {
         if (!isNaN(an) && !isNaN(bn)) return an - bn;
         return String(a.rollNo).localeCompare(String(b.rollNo));
       });
+      // Re-insert the roll numbers the sheet skipped, so e.g. 13,14,16,17
+      // still prints a row for 15 and does NOT pull 16/17 up a position.
+      // Duplicate roll numbers survive untouched (diff of 0 adds nothing).
+      const expanded = [];
+      list.forEach((s, i) => {
+        if (i > 0) {
+          const prev = rollNum(list[i - 1].rollNo);
+          const cur  = rollNum(s.rollNo);
+          if (prev !== null && cur !== null && cur - prev > 1 && cur - prev - 1 <= MAX_ROLL_GAP_FILL) {
+            for (let r = prev + 1; r < cur; r++) {
+              const found = detailsByRoll.get(String(r));
+              expanded.push({ ...(found || {}), section: sec, rollNo: String(r), __gap: true });
+            }
+          }
+        }
+        expanded.push(s);
+      });
+      sectionStudents[sec] = expanded;
     }
     // else: leave as original Excel row order (Array.sort is never called,
     // so insertion order from allocation.studentData is preserved as-is).
@@ -160,10 +288,17 @@ const buildHallStudentsElective = (allocation) => {
         : (entry.toRoll - entry.fromRoll + 1);
       if (sectionPointer[sec] === undefined) sectionPointer[sec] = 0;
       const secList = sectionStudents[sec] || [];
-      for (let i = 0; i < count; i++) {
+      // `count` is the number of REAL students the hall plan assigned here.
+      // Gap placeholders ride along in position without consuming a slot, so
+      // hall composition stays exactly as allocated.
+      let taken = 0;
+      while (taken < count) {
         const student = secList[sectionPointer[sec]++] || null;
+        if (!student || !student.__gap) taken++;
         students.push({
-          sNo: sNo++,
+          // Print the Excel Roll No as-is; fall back to a running number only
+          // for sections that have no Roll No column at all.
+          sNo: student?.rollNo ? student.rollNo : sNo,
           registerNo: student?.rollNumber || '',
           name: student?.studentName || '',
           section: sec,
@@ -171,6 +306,7 @@ const buildHallStudentsElective = (allocation) => {
           electives: student?.electives || [],
           year: allocation.year,
         });
+        sNo++;
       }
     });
 
@@ -908,7 +1044,7 @@ const ExcelUpload = ({ onDataReady, expectedCount }) => {
       if (!rows.length) { toast.error('File is empty'); setProcessing(false); return; }
 
       const headers = Object.keys(rows[0]);
-      let regCol = null, nameCol = null;
+      let regCol = null, nameCol = null, rollCol = null;
       headers.forEach(h => {
         const low = h.toLowerCase().replace(/\s+/g,' ').trim();
         if (!regCol && (
@@ -920,6 +1056,13 @@ const ExcelUpload = ({ onDataReady, expectedCount }) => {
           low.includes('name of the student') || low.includes('student name') ||
           low === 'name' || low === 'student_name'
         )) nameCol = h;
+        // Optional — when present, roll numbers are matched positionally so a
+        // roll number with no student details keeps its own row in the sheet.
+        if (!rollCol && (
+          low === 'roll no' || low === 'rollno' || low === 'roll no.' ||
+          low === 'roll number' || low === 's.no' || low === 'sno' ||
+          low === 's no' || low === 'sl no'
+        )) rollCol = h;
       });
 
       if (!regCol)  {
@@ -932,14 +1075,20 @@ const ExcelUpload = ({ onDataReady, expectedCount }) => {
       }
 
       const map = new Map();
+      // Ordered rows — kept in exact Excel order, INCLUDING rows whose
+      // student details are blank, so a Roll No that exists in the sequence
+      // without details never gets removed or shifted out of position.
+      const orderedRows = [];
       rows.forEach(row => {
         const reg  = String(row[regCol]  || '').trim();
         const name = String(row[nameCol] || '').trim().toUpperCase();
+        const roll = rollCol ? String(row[rollCol] || '').trim() : '';
         if (reg && name) map.set(reg, name);
+        if (reg || name || roll) orderedRows.push({ rollNo: roll, registerNo: reg, name });
       });
 
       if (!map.size) { toast.error('No valid rows found'); setProcessing(false); return; }
-      setParseResult({ map, count: map.size, regCol, nameCol });
+      setParseResult({ map, rows: orderedRows, count: map.size, regCol, nameCol, rollCol });
       toast.success(`Loaded ${map.size} student records`);
     } catch { toast.error('Failed to parse file'); }
     finally   { setProcessing(false); }
@@ -1028,14 +1177,16 @@ const ExcelUpload = ({ onDataReady, expectedCount }) => {
           &bull; <code>Register No</code> — university register number (e.g. 230392131042001)<br/>
           &bull; <code>Name</code> or <code>Name of the Student</code> — full student name<br/>
           <span style={{ color:'#9B8F94', fontSize:'11px' }}>
-            Note: "Roll No" / "S.No" columns are ignored. Only Register No + Name are used.
+            Optional: a <code>Roll No</code> / <code>S.No</code> column. When present, rows are
+            matched by Roll No — a Roll No with no student details keeps its own blank row and
+            the students after it are never moved up.
           </span>
         </p>
       </div>
 
       <button
         disabled={!parseResult}
-        onClick={() => parseResult && onDataReady(parseResult.map)}
+        onClick={() => parseResult && onDataReady(parseResult.map, parseResult.rows)}
         style={{
           width:'100%', padding:'13px', borderRadius:'50px', border:'none',
           background: parseResult ? 'linear-gradient(135deg,#B42B6A 0%,#9A2259 100%)' : '#E8E2E5',
@@ -1060,6 +1211,9 @@ const AttendancePrint = () => {
   const [allocation, setAllocation] = useState(null);
   const [loading,    setLoading]    = useState(true);
   const [nameMap,    setNameMap]    = useState(null);
+  // Ordered Excel rows (incl. Roll No, when the file had that column) — drives
+  // roll-number-based positioning of the standard attendance sheet.
+  const [excelRows,  setExcelRows]  = useState(null);
   const [showDatePrompt, setShowDatePrompt] = useState(false);
   const [dateSessionMap, setDateSessionMap] = useState({});
   const [sessionPopupDate, setSessionPopupDate] = useState(null);
@@ -1412,7 +1566,7 @@ const AttendancePrint = () => {
     } else {
       // nameMap may be null — buildHallStudentsStandard handles that by
       // generating blank rows from the hall plan (students fill in during exam).
-      hallMap = buildHallStudentsStandard(allocation, nameMap);
+      hallMap = buildHallStudentsStandard(allocation, nameMap, excelRows);
     }
 
     // Always use hallAllocations order — this is the hall plan, not seating.
@@ -1748,7 +1902,7 @@ const AttendancePrint = () => {
           </div>
           <ExcelUpload
             expectedCount={allocation.totalStrength}
-            onDataReady={map => {
+            onDataReady={(map, rows) => {
               if (allocation.totalStrength && map.size !== allocation.totalStrength) {
                 toast.warn(
                   `Excel has ${map.size} student${map.size !== 1 ? 's' : ''} but allocation has ${allocation.totalStrength}. ` +
@@ -1757,6 +1911,7 @@ const AttendancePrint = () => {
                 );
               }
               setNameMap(map);
+              setExcelRows(rows || null);
               setShowOptionalUpload(false);
             }}
           />
@@ -1775,7 +1930,7 @@ const AttendancePrint = () => {
             {nameMap.size} student names loaded from Excel — register numbers pre-filled.
           </span>
           <button
-            onClick={() => setNameMap(null)}
+            onClick={() => { setNameMap(null); setExcelRows(null); }}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9B8F94', padding: '2px 4px', fontSize: '12px' }}
           >Clear</button>
         </div>
